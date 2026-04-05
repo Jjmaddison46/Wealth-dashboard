@@ -156,6 +156,41 @@ def spacer(h="1rem"):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# SAFE LAYOUT BUILDER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def make_layout(overrides=None):
+    """Build a Plotly layout dict from PL_BASE with safe overrides."""
+    base = {
+        "paper_bgcolor": "rgba(0,0,0,0)",
+        "plot_bgcolor": "rgba(0,0,0,0)",
+        "font": dict(color=TEXT2, size=11, family="Inter, sans-serif"),
+        "margin": dict(l=15, r=15, t=25, b=15),
+        "legend": dict(font=dict(size=11, color=TEXT2), bgcolor="rgba(0,0,0,0)"),
+        "hoverlabel": dict(bgcolor=CARD, bordercolor=BORDER, font=dict(color=TEXT, size=12, family="Inter")),
+    }
+    if overrides:
+        base.update(overrides)
+    return base
+
+
+GRID_AXIS = {"gridcolor": BORDER, "gridwidth": 1, "griddash": "dot", "zeroline": False}
+CLEAN_AXIS = {"showgrid": False, "zeroline": False}
+PLT_CFG = {"displayModeBar": False}
+
+CLR_BASE = BLUE
+CLR_AGG = PURPLE
+CLR_CON = CYAN
+
+MONTHS = ["January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"]
+
+LBL_CASH = "Cash Savings"
+LBL_STOCK = "Stocks and Shares"
+LBL_PENSION = "Pension"
+LBL_HOUSE = "House Equity"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # UK TAX ENGINE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def calc_uk_tax(gross, scotland=False):
@@ -215,34 +250,6 @@ def forecast_wealth(s_liquid, s_invested, s_pension, m_invest, m_pension, m_surp
             pension += m_pension * 12 + emp_pension_yr
             liquid += m_surplus * 12
     return pd.DataFrame(rows)
-
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# PLOTLY DEFAULTS (safe)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PL = dict(
-    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(color=TEXT2, size=11, family="Inter, sans-serif"),
-    margin=dict(l=15, r=15, t=25, b=15),
-    legend=dict(font=dict(size=11, color=TEXT2), bgcolor="rgba(0,0,0,0)"),
-    hoverlabel=dict(bgcolor=CARD, bordercolor=BORDER, font=dict(color=TEXT, size=12, family="Inter")),
-)
-GRID_AXIS = {"gridcolor": BORDER, "gridwidth": 1, "griddash": "dot", "zeroline": False}
-CLEAN_AXIS = {"showgrid": False, "zeroline": False}
-PLT_CFG = {"displayModeBar": False}
-
-CLR_BASE = BLUE
-CLR_AGG = PURPLE
-CLR_CON = CYAN
-
-MONTHS = ["January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"]
-
-# Asset labels (consistent everywhere)
-LBL_CASH = "Cash Savings"
-LBL_STOCK = "Stocks and Shares"
-LBL_PENSION = "Pension"
-LBL_HOUSE = "House Equity"
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -415,7 +422,6 @@ st.markdown(f"""<div style="display:flex;align-items:baseline;gap:.8rem;margin-b
 with st.expander("Getting Started — How to Use This Dashboard", expanded=False):
     st.markdown(f"""
 <div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:14px;padding:1.2rem 1.4rem;">
-
 <div style="color:{TEXT};font-size:.95rem;font-weight:600;margin-bottom:.8rem;">Quick Start Guide</div>
 
 <div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid {BORDER};">
@@ -445,15 +451,12 @@ with st.expander("Getting Started — How to Use This Dashboard", expanded=False
 
 <div style="margin-top:.8rem;padding:.6rem .8rem;background:{PURPLE}10;border:1px solid {PURPLE}22;border-radius:10px;">
 <div style="color:{TEXT2};font-size:.78rem;line-height:1.55;">
-This dashboard works best when you save snapshots regularly. Monthly snapshots reveal trends and momentum over time. The app is designed for manual tracking and personal financial planning.
-</div></div>
-
-</div>
-""", unsafe_allow_html=True)
+This dashboard works best when you save snapshots regularly. Monthly snapshots reveal trends and momentum over time. The app is designed for manual tracking and personal financial planning.</div></div>
+</div>""", unsafe_allow_html=True)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# TABS — ordered per spec
+# TABS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 tab_overview, tab_history, tab_portfolio, tab_forecast, tab_goals, tab_assumptions, tab_cashflow, tab_salary = st.tabs(
     ["Overview", "History", "Portfolio", "Forecast", "Goals", "Assumptions", "Cash Flow", "Salary Calculator"]
@@ -495,7 +498,7 @@ with tab_overview:
                                textinfo="label+percent", textfont=dict(size=11, color=TEXT, family="Inter"),
                                hovertemplate="<b>%{label}</b><br>£%{value:,.0f}<extra></extra>",
                                direction="clockwise", sort=False))
-        fig.update_layout(**PL, height=370, showlegend=False)
+        fig.update_layout(**make_layout({"height": 370, "showlegend": False}))
         fig.add_annotation(text=f"<b>{gbp(net_worth)}</b>", x=0.5, y=0.54,
                            font=dict(size=19, color=TEXT, family="Inter"), showarrow=False)
         fig.add_annotation(text="NET WORTH", x=0.5, y=0.43,
@@ -513,9 +516,11 @@ with tab_overview:
                                text=[gbp(v) for v in vals], textposition="auto",
                                textfont=dict(color=TEXT, size=11, family="Inter"),
                                hovertemplate="<b>%{y}</b>: £%{x:,.0f}<extra></extra>"))
-        fig.update_layout(**PL, height=370,
-                          yaxis={**CLEAN_AXIS, "autorange": "reversed", "tickfont": dict(color=TEXT2, size=11)},
-                          xaxis={**CLEAN_AXIS, "zeroline": True, "zerolinecolor": BORDER_L, "zerolinewidth": 1})
+        fig.update_layout(**make_layout({
+            "height": 370,
+            "yaxis": {**CLEAN_AXIS, "autorange": "reversed", "tickfont": dict(color=TEXT2, size=11)},
+            "xaxis": {**CLEAN_AXIS, "zeroline": True, "zerolinecolor": BORDER_L, "zerolinewidth": 1},
+        }))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
 
@@ -548,24 +553,26 @@ with tab_history:
             c3.markdown(kpi("Growth Rate", pct_fmt(change_pct), cc, ci), unsafe_allow_html=True)
             spacer("1rem")
 
+        # Net worth line chart
         st.markdown(card_open("Net Worth Over Time"), unsafe_allow_html=True)
         view_mode = st.radio("View", ["Monthly", "Yearly"], horizontal=True, label_visibility="collapsed")
         if view_mode == "Yearly" and len(history_df) > 0:
             yearly = history_df.copy()
             yearly["year"] = yearly["date"].dt.year
             yearly = yearly.groupby("year").last().reset_index()
-            cx, cy = yearly["year"].astype(str), yearly["net_worth"]
+            cx, cy_vals = yearly["year"].astype(str), yearly["net_worth"]
         else:
-            cx, cy = history_df["label"], history_df["net_worth"]
+            cx, cy_vals = history_df["label"], history_df["net_worth"]
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=cx, y=cy, mode="lines+markers",
+        fig.add_trace(go.Scatter(x=cx, y=cy_vals, mode="lines+markers",
                                  line=dict(color=PURPLE, width=3),
                                  marker=dict(size=8, color=PURPLE, line=dict(color=BG, width=2)),
                                  hovertemplate="<b>%{x}</b><br>£%{y:,.0f}<extra></extra>"))
-        fig.update_layout(**PL, height=380, showlegend=False, xaxis=GRID_AXIS, yaxis=GRID_AXIS)
+        fig.update_layout(**make_layout({"height": 380, "showlegend": False, "xaxis": GRID_AXIS, "yaxis": GRID_AXIS}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
 
+        # Stacked bar breakdown
         if len(history_df) >= 2:
             spacer(".5rem")
             st.markdown(card_open("Asset Breakdown Over Time"), unsafe_allow_html=True)
@@ -575,12 +582,18 @@ with tab_history:
                 fig2.add_trace(go.Bar(x=history_df["label"], y=history_df[col_name], name=lbl,
                                       marker=dict(color=clr, cornerradius=4),
                                       hovertemplate=f"<b>{lbl}</b><br>" + "%{x}: £%{y:,.0f}<extra></extra>"))
-            fig2.update_layout(**PL, height=350, barmode="stack",
-                               legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"),
-                               xaxis=GRID_AXIS, yaxis=GRID_AXIS)
+            fig2.update_layout(**make_layout({
+                "height": 350,
+                "barmode": "stack",
+                "legend": dict(orientation="h", y=-0.15, x=0.5, xanchor="center",
+                               font=dict(size=11, color=TEXT2), bgcolor="rgba(0,0,0,0)"),
+                "xaxis": GRID_AXIS,
+                "yaxis": GRID_AXIS,
+            }))
             st.plotly_chart(fig2, use_container_width=True, config=PLT_CFG)
             st.markdown(card_close(), unsafe_allow_html=True)
 
+        # Growth table
         spacer(".5rem")
         st.markdown(card_open("Month-to-Month Growth"), unsafe_allow_html=True)
         th = f'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.82rem;"><thead><tr style="border-bottom:2px solid {BORDER};"><th style="text-align:left;padding:.5rem .6rem;color:{TEXT2};font-weight:600;">Period</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT2};font-weight:600;">Net Worth</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT2};font-weight:600;">Change</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT2};font-weight:600;">Growth</th></tr></thead><tbody>'
@@ -597,6 +610,7 @@ with tab_history:
         st.markdown(th, unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
 
+        # Manage snapshots
         spacer(".5rem")
         st.markdown(card_open("Manage Snapshots"), unsafe_allow_html=True)
         del_keys = sorted(st.session_state.snapshots.keys())
@@ -636,20 +650,19 @@ with tab_portfolio:
                                hole=0.6, marker=dict(colors=[BLUE, GREEN], line=dict(color=BG, width=2)),
                                textinfo="label+percent", textfont=dict(size=12, color=TEXT, family="Inter"),
                                hovertemplate="<b>%{label}</b><br>£%{value:,.0f}<extra></extra>"))
-        fig.update_layout(**PL, height=320, showlegend=False)
+        fig.update_layout(**make_layout({"height": 320, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
 
     with cr:
         st.markdown(card_open("Annual Contributions"), unsafe_allow_html=True)
-        cl2 = ["Investment", "Pension (you)", "Pension (employer)"]
-        cv2 = [monthly_invest * 12, employee_pension_annual, employer_pension_annual]
-        cc2 = [BLUE, GREEN, CYAN]
-        fig = go.Figure(go.Bar(x=cl2, y=cv2, marker=dict(color=cc2, cornerradius=8),
-                               text=[gbp(v) for v in cv2], textposition="auto",
-                               textfont=dict(color=TEXT, size=12, family="Inter"),
+        fig = go.Figure(go.Bar(x=["Investment", "Pension (you)", "Pension (employer)"],
+                               y=[monthly_invest * 12, employee_pension_annual, employer_pension_annual],
+                               marker=dict(color=[BLUE, GREEN, CYAN], cornerradius=8),
+                               text=[gbp(monthly_invest * 12), gbp(employee_pension_annual), gbp(employer_pension_annual)],
+                               textposition="auto", textfont=dict(color=TEXT, size=12, family="Inter"),
                                hovertemplate="<b>%{x}</b><br>£%{y:,.0f}/yr<extra></extra>"))
-        fig.update_layout(**PL, height=320, xaxis=CLEAN_AXIS, yaxis=CLEAN_AXIS)
+        fig.update_layout(**make_layout({"height": 320, "xaxis": CLEAN_AXIS, "yaxis": CLEAN_AXIS}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
 
@@ -668,6 +681,7 @@ with tab_forecast:
         cols[i].markdown(kpi_small(lb, gbp(v), PURPLE), unsafe_allow_html=True)
     spacer("1rem")
 
+    # Scenario chart
     st.markdown(card_open("Scenario Analysis", "Conservative · Base · Aggressive"), unsafe_allow_html=True)
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df_con["year"], y=df_con["net_worth"],
@@ -685,9 +699,13 @@ with tab_forecast:
     fig.add_hline(y=target_wealth, line_dash="dash", line_color=GREEN, line_width=1.5,
                   annotation_text=f"  Target: {gbp(target_wealth)}", annotation_font=dict(color=GREEN, size=11),
                   annotation_position="top left")
-    fig.update_layout(**PL, height=440, legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center"),
-                      xaxis={**GRID_AXIS, "title": "Years", "titlefont": dict(color=TEXT3, size=11)},
-                      yaxis={**GRID_AXIS, "title": "Net Worth (£)", "titlefont": dict(color=TEXT3, size=11)})
+    fig.update_layout(**make_layout({
+        "height": 440,
+        "legend": dict(orientation="h", y=-0.1, x=0.5, xanchor="center",
+                       font=dict(size=11, color=TEXT2), bgcolor="rgba(0,0,0,0)"),
+        "xaxis": {**GRID_AXIS, "title": "Years", "titlefont": dict(color=TEXT3, size=11)},
+        "yaxis": {**GRID_AXIS, "title": "Net Worth (£)", "titlefont": dict(color=TEXT3, size=11)},
+    }))
     st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
     st.markdown(card_close(), unsafe_allow_html=True)
 
@@ -702,22 +720,25 @@ with tab_forecast:
         fig2.add_trace(go.Scatter(x=df_base["year"], y=df_base["net_worth_real"], name="Real",
                                   line=dict(color=CYAN, width=2.5),
                                   hovertemplate="Year %{x}<br>£%{y:,.0f}<extra>Real</extra>"))
-        fig2.update_layout(**PL, height=310, legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"),
-                           xaxis=GRID_AXIS, yaxis=GRID_AXIS)
+        fig2.update_layout(**make_layout({
+            "height": 310,
+            "legend": dict(orientation="h", y=-0.15, x=0.5, xanchor="center",
+                           font=dict(size=11, color=TEXT2), bgcolor="rgba(0,0,0,0)"),
+            "xaxis": GRID_AXIS, "yaxis": GRID_AXIS,
+        }))
         st.plotly_chart(fig2, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
 
     with cr:
         st.markdown(card_open("Retirement Scenario Comparison"), unsafe_allow_html=True)
         rv = [df_con.iloc[-1]["net_worth"], df_base.iloc[-1]["net_worth"], df_agg.iloc[-1]["net_worth"]]
-        rl = ["Conservative", "Base", "Aggressive"]
-        rc = [CLR_CON, CLR_BASE, CLR_AGG]
-        fig3 = go.Figure(go.Bar(x=rl, y=rv, marker=dict(color=rc, cornerradius=8),
+        fig3 = go.Figure(go.Bar(x=["Conservative", "Base", "Aggressive"], y=rv,
+                                marker=dict(color=[CLR_CON, CLR_BASE, CLR_AGG], cornerradius=8),
                                 text=[gbp(v) for v in rv], textposition="auto",
                                 textfont=dict(color=TEXT, size=13, family="Inter"),
                                 hovertemplate="<b>%{x}</b><br>£%{y:,.0f}<extra></extra>"))
         fig3.add_hline(y=target_wealth, line_dash="dash", line_color=GREEN, line_width=1.5)
-        fig3.update_layout(**PL, height=310, xaxis=CLEAN_AXIS, yaxis=CLEAN_AXIS)
+        fig3.update_layout(**make_layout({"height": 310, "xaxis": CLEAN_AXIS, "yaxis": CLEAN_AXIS}))
         st.plotly_chart(fig3, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
 
@@ -769,8 +790,10 @@ with tab_goals:
         fig_g.add_vline(x=cy, line_dash="dot", line_color=GREEN, line_width=1.5,
                         annotation_text=f"  Year {cy} (age {current_age + cy})",
                         annotation_font=dict(color=GREEN, size=11))
-    fig_g.update_layout(**PL, height=360, showlegend=False,
-                        xaxis={**GRID_AXIS, "title": "Years"}, yaxis=GRID_AXIS)
+    fig_g.update_layout(**make_layout({
+        "height": 360, "showlegend": False,
+        "xaxis": {**GRID_AXIS, "title": "Years"}, "yaxis": GRID_AXIS,
+    }))
     st.plotly_chart(fig_g, use_container_width=True, config=PLT_CFG)
     st.markdown(card_close(), unsafe_allow_html=True)
 
@@ -837,13 +860,13 @@ with tab_cashflow:
             hole=0.58, marker=dict(colors=[RED, BLUE, GREEN, CYAN], line=dict(color=BG, width=2)),
             textinfo="label+percent", textfont=dict(size=11, color=TEXT, family="Inter"),
             hovertemplate="<b>%{label}</b><br>£%{value:,.0f}/mo<extra></extra>"))
-        fig.update_layout(**PL, height=350, showlegend=False)
+        fig.update_layout(**make_layout({"height": 350, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# SALARY CALCULATOR (standalone, last tab)
+# SALARY CALCULATOR
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab_salary:
     st.markdown(f"""<div style="display:flex;align-items:baseline;gap:.6rem;margin:1rem 0 .5rem 0;">
@@ -885,7 +908,7 @@ with tab_salary:
                                hole=0.58, marker=dict(colors=[RED, AMBER, GREEN], line=dict(color=BG, width=2)),
                                textinfo="label+percent", textfont=dict(size=10.5, color=TEXT, family="Inter"),
                                hovertemplate="<b>%{label}</b><br>£%{value:,.0f}<extra></extra>"))
-        fig.update_layout(**PL, height=280, showlegend=False)
+        fig.update_layout(**make_layout({"height": 280, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
 
