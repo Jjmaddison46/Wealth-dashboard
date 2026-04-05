@@ -224,6 +224,17 @@ def spacer(h="1rem"):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# SAFE AXIS MERGE HELPER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def axis_opts(*dicts):
+    """Merge multiple dicts left-to-right; later values override earlier ones."""
+    merged = {}
+    for d in dicts:
+        merged.update(d)
+    return merged
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # UK TAX ENGINE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def calc_uk_tax(gross, scotland=False):
@@ -320,8 +331,8 @@ PL = dict(
     legend=dict(font=dict(size=11, color=TEXT2), bgcolor="rgba(0,0,0,0)"),
     hoverlabel=dict(bgcolor=CARD, bordercolor=BORDER, font=dict(color=TEXT, size=12, family="Inter")),
 )
-GRID = dict(gridcolor=BORDER, gridwidth=1, griddash="dot", zeroline=False)
-AXIS_CLEAN = dict(showgrid=False, zeroline=False)
+GRID = {"gridcolor": BORDER, "gridwidth": 1, "griddash": "dot", "zeroline": False}
+AXIS_CLEAN = {"showgrid": False, "zeroline": False}
 CFG = {"displayModeBar": False}
 
 # Scenario color mapping: Blue=Base, Purple=Aggressive, Cyan=Conservative
@@ -514,9 +525,11 @@ with tab_overview:
             textfont=dict(color=TEXT, size=11, family="Inter"),
             hovertemplate="<b>%{y}</b>: £%{x:,.0f}<extra></extra>",
         ))
-        fig.update_layout(**PL, height=370,
-                          yaxis=dict(autorange="reversed", **AXIS_CLEAN, tickfont=dict(color=TEXT2, size=11)),
-                          xaxis=dict(**AXIS_CLEAN, zeroline=True, zerolinecolor=BORDER_L, zerolinewidth=1))
+        fig.update_layout(
+            **PL, height=370,
+            yaxis=axis_opts(AXIS_CLEAN, {"autorange": "reversed", "tickfont": dict(color=TEXT2, size=11)}),
+            xaxis=axis_opts(AXIS_CLEAN, {"zeroline": True, "zerolinecolor": BORDER_L, "zerolinewidth": 1}),
+        )
         st.plotly_chart(fig, use_container_width=True, config=CFG)
         st.markdown(card_end(), unsafe_allow_html=True)
 
@@ -752,10 +765,12 @@ with tab_forecast:
     fig.add_hline(y=target_wealth, line_dash="dash", line_color=GREEN, line_width=1.5,
                   annotation_text=f"  Target: {gbp(target_wealth)}", annotation_font=dict(color=GREEN, size=11),
                   annotation_position="top left")
-    fig.update_layout(**PL, height=440,
-                      legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center"),
-                      xaxis=dict(title="Years", titlefont=dict(color=TEXT3, size=11), **GRID),
-                      yaxis=dict(title="Net Worth (£)", titlefont=dict(color=TEXT3, size=11), **GRID))
+    fig.update_layout(
+        **PL, height=440,
+        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center"),
+        xaxis=axis_opts(GRID, {"title": "Years", "titlefont": dict(color=TEXT3, size=11)}),
+        yaxis=axis_opts(GRID, {"title": "Net Worth (£)", "titlefont": dict(color=TEXT3, size=11)}),
+    )
     st.plotly_chart(fig, use_container_width=True, config=CFG)
     st.markdown(card_end(), unsafe_allow_html=True)
 
@@ -776,9 +791,11 @@ with tab_forecast:
             line=dict(color=CYAN, width=2.5),
             hovertemplate="Year %{x}<br>£%{y:,.0f}<extra>Real</extra>",
         ))
-        fig2.update_layout(**PL, height=310,
-                           legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"),
-                           xaxis=GRID, yaxis=GRID)
+        fig2.update_layout(
+            **PL, height=310,
+            legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"),
+            xaxis=GRID, yaxis=GRID,
+        )
         st.plotly_chart(fig2, use_container_width=True, config=CFG)
         st.markdown(card_end(), unsafe_allow_html=True)
 
@@ -884,7 +901,11 @@ with tab_goals:
         fig_g.add_vline(x=cy, line_dash="dot", line_color=GREEN, line_width=1.5,
                         annotation_text=f"  Year {cy} (age {current_age + cy})",
                         annotation_font=dict(color=GREEN, size=11))
-    fig_g.update_layout(**PL, height=360, showlegend=False, xaxis=dict(title="Years", **GRID), yaxis=GRID)
+    fig_g.update_layout(
+        **PL, height=360, showlegend=False,
+        xaxis=axis_opts(GRID, {"title": "Years"}),
+        yaxis=GRID,
+    )
     st.plotly_chart(fig_g, use_container_width=True, config=CFG)
     st.markdown(card_end(), unsafe_allow_html=True)
 
@@ -893,6 +914,7 @@ with tab_goals:
 # ASSUMPTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab_assumptions:
+    region = "Scotland" if scotland_tax else "England / Wales / NI"
     st.markdown(section_header("Model Assumptions", "⚙"), unsafe_allow_html=True)
 
     st.markdown(card("Parameters"), unsafe_allow_html=True)
