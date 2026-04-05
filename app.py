@@ -33,6 +33,10 @@ SHADOW = "0 4px 24px rgba(0,0,0,.35), 0 1px 4px rgba(0,0,0,.25)"
 SHADOW_SM = "0 2px 12px rgba(0,0,0,.25)"
 GLOW_P = f"0 0 20px {PURPLE}22, 0 4px 24px rgba(0,0,0,.35)"
 
+# Bold white text style for chart data labels
+BOLD_WHITE = dict(color=TEXT, size=13, family="Inter, sans-serif")
+BOLD_WHITE_SM = dict(color=TEXT, size=11, family="Inter, sans-serif")
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # SNAPSHOT PERSISTENCE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -159,7 +163,6 @@ def spacer(h="1rem"):
 # SAFE LAYOUT BUILDER
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def make_layout(overrides=None):
-    """Build a Plotly layout dict from PL_BASE with safe overrides."""
     base = {
         "paper_bgcolor": "rgba(0,0,0,0)",
         "plot_bgcolor": "rgba(0,0,0,0)",
@@ -187,7 +190,7 @@ MONTHS = ["January", "February", "March", "April", "May", "June",
 LBL_CASH = "Cash Savings"
 LBL_STOCK = "Stocks and Shares"
 LBL_PENSION = "Pension"
-LBL_HOUSE = "House Equity"
+LBL_HOUSE = "Real Estate Equity"
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -277,9 +280,7 @@ with st.sidebar:
     cash = st.number_input("Cash Savings (£)", 0, 10_000_000, int(existing.get("cash", 25_000)), 1_000)
     investments = st.number_input("Stocks and Shares (£)", 0, 50_000_000, int(existing.get("investments", 85_000)), 1_000)
     pension_val = st.number_input("Pension (£)", 0, 50_000_000, int(existing.get("pension", 42_000)), 1_000)
-    property_val = st.number_input("Property Value (£)", 0, 50_000_000, int(existing.get("property", 350_000)), 5_000)
-
-    st.markdown(sidebar_label("Liabilities", RED), unsafe_allow_html=True)
+    property_val = st.number_input("Real Estate Value (£)", 0, 50_000_000, int(existing.get("property", 350_000)), 5_000)
     mortgage = st.number_input("Mortgage Balance (£)", 0, 50_000_000, int(existing.get("mortgage", 220_000)), 5_000)
 
     st.markdown("---")
@@ -432,7 +433,7 @@ with st.expander("Getting Started — How to Use This Dashboard", expanded=False
 <div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid {BORDER};">
 <div style="min-width:32px;height:32px;border-radius:8px;background:{BLUE}22;border:1px solid {BLUE}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{BLUE};">2</div>
 <div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Enter Your Figures</div>
-<div style="color:{TEXT2};font-size:.8rem;">Fill in: <b>Cash Savings</b>, <b>Stocks and Shares</b>, <b>Pension</b>, <b>Property Value</b>, and <b>Mortgage</b>.</div></div></div>
+<div style="color:{TEXT2};font-size:.8rem;">Fill in: <b>Cash Savings</b>, <b>Stocks and Shares</b>, <b>Pension</b>, <b>Real Estate Value</b>, and <b>Mortgage</b>.</div></div></div>
 
 <div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid {BORDER};">
 <div style="min-width:32px;height:32px;border-radius:8px;background:{CYAN}22;border:1px solid {CYAN}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{CYAN};">3</div>
@@ -495,7 +496,8 @@ with tab_overview:
         colors = [CYAN, BLUE, GREEN, AMBER]
         fig = go.Figure(go.Pie(labels=labels, values=values, hole=0.62,
                                marker=dict(colors=colors, line=dict(color=BG, width=2)),
-                               textinfo="label+percent", textfont=dict(size=11, color=TEXT, family="Inter"),
+                               textinfo="label+percent",
+                               textfont=BOLD_WHITE_SM,
                                hovertemplate="<b>%{label}</b><br>£%{value:,.0f}<extra></extra>",
                                direction="clockwise", sort=False))
         fig.update_layout(**make_layout({"height": 370, "showlegend": False}))
@@ -513,8 +515,8 @@ with tab_overview:
         clrs = [CYAN, BLUE, GREEN, AMBER, RED]
         fig = go.Figure(go.Bar(x=vals, y=cats, orientation="h",
                                marker=dict(color=clrs, cornerradius=6),
-                               text=[gbp(v) for v in vals], textposition="auto",
-                               textfont=dict(color=TEXT, size=11, family="Inter"),
+                               text=[gbp(v) for v in vals], textposition="inside",
+                               textfont=BOLD_WHITE_SM,
                                hovertemplate="<b>%{y}</b>: £%{x:,.0f}<extra></extra>"))
         fig.update_layout(**make_layout({
             "height": 370,
@@ -564,11 +566,14 @@ with tab_history:
         else:
             cx, cy_vals = history_df["label"], history_df["net_worth"]
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=cx, y=cy_vals, mode="lines+markers",
+        fig.add_trace(go.Scatter(x=cx, y=cy_vals, mode="lines+markers+text",
                                  line=dict(color=PURPLE, width=3),
-                                 marker=dict(size=8, color=PURPLE, line=dict(color=BG, width=2)),
+                                 marker=dict(size=10, color=PURPLE, line=dict(color=BG, width=2)),
+                                 text=[gbp(v) for v in cy_vals],
+                                 textposition="top center",
+                                 textfont=BOLD_WHITE_SM,
                                  hovertemplate="<b>%{x}</b><br>£%{y:,.0f}<extra></extra>"))
-        fig.update_layout(**make_layout({"height": 380, "showlegend": False, "xaxis": GRID_AXIS, "yaxis": GRID_AXIS}))
+        fig.update_layout(**make_layout({"height": 400, "showlegend": False, "xaxis": GRID_AXIS, "yaxis": GRID_AXIS}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
 
@@ -581,9 +586,12 @@ with tab_history:
                                         ("pension", LBL_PENSION, GREEN), ("house_equity", LBL_HOUSE, AMBER)]:
                 fig2.add_trace(go.Bar(x=history_df["label"], y=history_df[col_name], name=lbl,
                                       marker=dict(color=clr, cornerradius=4),
+                                      text=[gbp(v) for v in history_df[col_name]],
+                                      textposition="inside",
+                                      textfont=BOLD_WHITE_SM,
                                       hovertemplate=f"<b>{lbl}</b><br>" + "%{x}: £%{y:,.0f}<extra></extra>"))
             fig2.update_layout(**make_layout({
-                "height": 350,
+                "height": 400,
                 "barmode": "stack",
                 "legend": dict(orientation="h", y=-0.15, x=0.5, xanchor="center",
                                font=dict(size=11, color=TEXT2), bgcolor="rgba(0,0,0,0)"),
@@ -596,7 +604,7 @@ with tab_history:
         # Growth table
         spacer(".5rem")
         st.markdown(card_open("Month-to-Month Growth"), unsafe_allow_html=True)
-        th = f'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.82rem;"><thead><tr style="border-bottom:2px solid {BORDER};"><th style="text-align:left;padding:.5rem .6rem;color:{TEXT2};font-weight:600;">Period</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT2};font-weight:600;">Net Worth</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT2};font-weight:600;">Change</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT2};font-weight:600;">Growth</th></tr></thead><tbody>'
+        th = f'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.82rem;"><thead><tr style="border-bottom:2px solid {BORDER};"><th style="text-align:left;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Period</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Net Worth</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Change</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Growth</th></tr></thead><tbody>'
         for _, row in history_df.iterrows():
             chg = row.get("nw_change", None)
             if pd.isna(chg) or chg is None:
@@ -605,7 +613,7 @@ with tab_history:
                 cc2 = GREEN if chg >= 0 else RED
                 cs = gbp(chg)
                 ps = pct_fmt(row["nw_change_pct"])
-            th += f'<tr style="border-bottom:1px solid {BORDER};"><td style="padding:.45rem .6rem;color:{TEXT};">{row["label"]}</td><td style="padding:.45rem .6rem;color:{TEXT};text-align:right;font-weight:600;">{gbp(row["net_worth"])}</td><td style="padding:.45rem .6rem;color:{cc2};text-align:right;">{cs}</td><td style="padding:.45rem .6rem;color:{cc2};text-align:right;">{ps}</td></tr>'
+            th += f'<tr style="border-bottom:1px solid {BORDER};"><td style="padding:.45rem .6rem;color:{TEXT};font-weight:600;">{row["label"]}</td><td style="padding:.45rem .6rem;color:{TEXT};text-align:right;font-weight:700;">{gbp(row["net_worth"])}</td><td style="padding:.45rem .6rem;color:{cc2};text-align:right;font-weight:700;">{cs}</td><td style="padding:.45rem .6rem;color:{cc2};text-align:right;font-weight:700;">{ps}</td></tr>'
         th += "</tbody></table></div>"
         st.markdown(th, unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
@@ -648,7 +656,9 @@ with tab_portfolio:
         st.markdown(card_open("Portfolio Split"), unsafe_allow_html=True)
         fig = go.Figure(go.Pie(labels=[LBL_STOCK, LBL_PENSION], values=[investments, pension_val],
                                hole=0.6, marker=dict(colors=[BLUE, GREEN], line=dict(color=BG, width=2)),
-                               textinfo="label+percent", textfont=dict(size=12, color=TEXT, family="Inter"),
+                               textinfo="label+percent+value",
+                               texttemplate="<b>%{label}</b><br>£%{value:,.0f}<br>%{percent}",
+                               textfont=BOLD_WHITE_SM,
                                hovertemplate="<b>%{label}</b><br>£%{value:,.0f}<extra></extra>"))
         fig.update_layout(**make_layout({"height": 320, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
@@ -656,11 +666,13 @@ with tab_portfolio:
 
     with cr:
         st.markdown(card_open("Annual Contributions"), unsafe_allow_html=True)
+        contrib_vals = [monthly_invest * 12, employee_pension_annual, employer_pension_annual]
         fig = go.Figure(go.Bar(x=["Investment", "Pension (you)", "Pension (employer)"],
-                               y=[monthly_invest * 12, employee_pension_annual, employer_pension_annual],
+                               y=contrib_vals,
                                marker=dict(color=[BLUE, GREEN, CYAN], cornerradius=8),
-                               text=[gbp(monthly_invest * 12), gbp(employee_pension_annual), gbp(employer_pension_annual)],
-                               textposition="auto", textfont=dict(color=TEXT, size=12, family="Inter"),
+                               text=[gbp(v) for v in contrib_vals],
+                               textposition="inside",
+                               textfont=BOLD_WHITE,
                                hovertemplate="<b>%{x}</b><br>£%{y:,.0f}/yr<extra></extra>"))
         fig.update_layout(**make_layout({"height": 320, "xaxis": CLEAN_AXIS, "yaxis": CLEAN_AXIS}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
@@ -687,15 +699,28 @@ with tab_forecast:
     fig.add_trace(go.Scatter(x=df_con["year"], y=df_con["net_worth"],
                              name=f"Conservative ({pct_fmt(max(0, expected_return - 2))})",
                              line=dict(color=CLR_CON, width=2.5, dash="dot"),
+                             mode="lines+markers",
+                             marker=dict(size=4, color=CLR_CON),
                              hovertemplate="Year %{x}<br>£%{y:,.0f}<extra>Conservative</extra>"))
     fig.add_trace(go.Scatter(x=df_base["year"], y=df_base["net_worth"],
                              name=f"Base ({pct_fmt(expected_return)})",
                              line=dict(color=CLR_BASE, width=3.5),
+                             mode="lines+markers",
+                             marker=dict(size=5, color=CLR_BASE),
                              hovertemplate="Year %{x}<br>£%{y:,.0f}<extra>Base</extra>"))
     fig.add_trace(go.Scatter(x=df_agg["year"], y=df_agg["net_worth"],
                              name=f"Aggressive ({pct_fmt(expected_return + 2)})",
                              line=dict(color=CLR_AGG, width=2.5, dash="dot"),
+                             mode="lines+markers",
+                             marker=dict(size=4, color=CLR_AGG),
                              hovertemplate="Year %{x}<br>£%{y:,.0f}<extra>Aggressive</extra>"))
+    # Add endpoint labels
+    for df_sc, clr, nm in [(df_con, CLR_CON, "Con"), (df_base, CLR_BASE, "Base"), (df_agg, CLR_AGG, "Agg")]:
+        last_row = df_sc.iloc[-1]
+        fig.add_annotation(x=last_row["year"], y=last_row["net_worth"],
+                           text=f"<b>{gbp(last_row['net_worth'])}</b>",
+                           showarrow=False, xanchor="left", xshift=8,
+                           font=dict(color=clr, size=11, family="Inter"))
     fig.add_hline(y=target_wealth, line_dash="dash", line_color=GREEN, line_width=1.5,
                   annotation_text=f"  Target: {gbp(target_wealth)}", annotation_font=dict(color=GREEN, size=11),
                   annotation_position="top left")
@@ -716,10 +741,19 @@ with tab_forecast:
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(x=df_base["year"], y=df_base["net_worth"], name="Nominal",
                                   line=dict(color=BLUE, width=2.5),
+                                  mode="lines",
                                   hovertemplate="Year %{x}<br>£%{y:,.0f}<extra>Nominal</extra>"))
         fig2.add_trace(go.Scatter(x=df_base["year"], y=df_base["net_worth_real"], name="Real",
                                   line=dict(color=CYAN, width=2.5),
+                                  mode="lines",
                                   hovertemplate="Year %{x}<br>£%{y:,.0f}<extra>Real</extra>"))
+        # Endpoint labels
+        for nm, clr, col in [("Nominal", BLUE, "net_worth"), ("Real", CYAN, "net_worth_real")]:
+            last_v = df_base.iloc[-1][col]
+            fig2.add_annotation(x=df_base.iloc[-1]["year"], y=last_v,
+                                text=f"<b>{gbp(last_v)}</b>", showarrow=False,
+                                xanchor="left", xshift=6,
+                                font=dict(color=clr, size=10, family="Inter"))
         fig2.update_layout(**make_layout({
             "height": 310,
             "legend": dict(orientation="h", y=-0.15, x=0.5, xanchor="center",
@@ -734,8 +768,8 @@ with tab_forecast:
         rv = [df_con.iloc[-1]["net_worth"], df_base.iloc[-1]["net_worth"], df_agg.iloc[-1]["net_worth"]]
         fig3 = go.Figure(go.Bar(x=["Conservative", "Base", "Aggressive"], y=rv,
                                 marker=dict(color=[CLR_CON, CLR_BASE, CLR_AGG], cornerradius=8),
-                                text=[gbp(v) for v in rv], textposition="auto",
-                                textfont=dict(color=TEXT, size=13, family="Inter"),
+                                text=[gbp(v) for v in rv], textposition="inside",
+                                textfont=BOLD_WHITE,
                                 hovertemplate="<b>%{x}</b><br>£%{y:,.0f}<extra></extra>"))
         fig3.add_hline(y=target_wealth, line_dash="dash", line_color=GREEN, line_width=1.5)
         fig3.update_layout(**make_layout({"height": 310, "xaxis": CLEAN_AXIS, "yaxis": CLEAN_AXIS}))
@@ -780,7 +814,14 @@ with tab_goals:
     fig_g = go.Figure()
     fig_g.add_trace(go.Scatter(x=df_base["year"], y=df_base["net_worth"], name="Projected",
                                line=dict(color=BLUE, width=3),
+                               mode="lines",
                                hovertemplate="Year %{x}<br>£%{y:,.0f}<extra></extra>"))
+    # Endpoint label
+    last_nw = df_base.iloc[-1]["net_worth"]
+    fig_g.add_annotation(x=df_base.iloc[-1]["year"], y=last_nw,
+                         text=f"<b>{gbp(last_nw)}</b>", showarrow=False,
+                         xanchor="left", xshift=6,
+                         font=dict(color=BLUE, size=11, family="Inter"))
     fig_g.add_hline(y=target_wealth, line_dash="dash", line_color=GREEN, line_width=2,
                     annotation_text=f"  Target: {gbp(target_wealth)}",
                     annotation_font=dict(color=GREEN, size=11), annotation_position="top left")
@@ -858,7 +899,9 @@ with tab_cashflow:
             labels=["Expenses", "Investment", "Pension", "Surplus"],
             values=[monthly_expenses, monthly_invest, monthly_pension_contrib, max(0, surplus)],
             hole=0.58, marker=dict(colors=[RED, BLUE, GREEN, CYAN], line=dict(color=BG, width=2)),
-            textinfo="label+percent", textfont=dict(size=11, color=TEXT, family="Inter"),
+            textinfo="label+percent+value",
+            texttemplate="<b>%{label}</b><br>£%{value:,.0f}",
+            textfont=BOLD_WHITE_SM,
             hovertemplate="<b>%{label}</b><br>£%{value:,.0f}/mo<extra></extra>"))
         fig.update_layout(**make_layout({"height": 350, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
@@ -906,7 +949,9 @@ with tab_salary:
         fig = go.Figure(go.Pie(labels=["Income Tax", "National Insurance", "Net Pay"],
                                values=[tax["income_tax"], tax["ni"], tax["net_annual"]],
                                hole=0.58, marker=dict(colors=[RED, AMBER, GREEN], line=dict(color=BG, width=2)),
-                               textinfo="label+percent", textfont=dict(size=10.5, color=TEXT, family="Inter"),
+                               textinfo="label+percent+value",
+                               texttemplate="<b>%{label}</b><br>£%{value:,.0f}",
+                               textfont=BOLD_WHITE_SM,
                                hovertemplate="<b>%{label}</b><br>£%{value:,.0f}<extra></extra>"))
         fig.update_layout(**make_layout({"height": 280, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
