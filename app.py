@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import json
 import os
 import re
+import html
 from datetime import datetime
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -40,7 +41,6 @@ BLACK = "#000000"
 
 SHADOW = "0 4px 24px rgba(0,0,0,.35), 0 1px 4px rgba(0,0,0,.25)"
 SHADOW_SM = "0 2px 12px rgba(0,0,0,.25)"
-GLOW_P = f"0 0 20px {PURPLE}22, 0 4px 24px rgba(0,0,0,.35)"
 
 MONTHS = [
     "January", "February", "March", "April", "May", "June",
@@ -181,24 +181,38 @@ section[data-testid="stSidebar"] [data-baseweb="select"] > div {{
     color: {BLACK} !important;
     border-radius: 10px !important;
 }}
+
 section[data-testid="stSidebar"] [data-baseweb="select"] span,
 section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
     color: {BLACK} !important;
     fill: {BLACK} !important;
 }}
 
-section[data-testid="stSidebar"] .stSlider > div > div > div {{
-    background: rgba(59,130,246,.18) !important;
+section[data-testid="stSidebar"] .stSlider > div {{
+    padding-top: .2rem;
 }}
 
-section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div[data-testid="stTickBar"] {{
-    background: linear-gradient(90deg, {BLUE}, {CYAN}) !important;
+section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div {{
+    height: 10px !important;
+}}
+
+section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div {{
+    border-radius: 999px !important;
+}}
+
+section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:first-child {{
+    background: #CBD5E1 !important;
+    opacity: .22 !important;
+}}
+
+section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:nth-child(2) {{
+    background: linear-gradient(90deg, #FACC15, #EAB308) !important;
 }}
 
 section[data-testid="stSidebar"] .stSlider [role="slider"] {{
-    background: {WHITE} !important;
-    border: 2px solid {BLUE} !important;
-    box-shadow: 0 0 0 3px rgba(6,182,212,.18) !important;
+    background: #FFFFFF !important;
+    border: 3px solid #94A3B8 !important;
+    box-shadow: 0 0 0 5px rgba(59,130,246,.18) !important;
 }}
 
 section[data-testid="stSidebar"] .stButton > button {{
@@ -209,6 +223,7 @@ section[data-testid="stSidebar"] .stButton > button {{
     font-weight: 800 !important;
     box-shadow: none !important;
 }}
+
 section[data-testid="stSidebar"] .stButton > button:hover {{
     background: #F3F4F6 !important;
     color: {BLACK} !important;
@@ -308,14 +323,71 @@ div[data-testid="column"] > div {{
     letter-spacing:.04em;
 }}
 
-.info-popover button {{
-    min-height: 28px !important;
-    padding: 0 8px !important;
-    border-radius: 999px !important;
-    background: {CARD_H} !important;
-    color: {TEXT2} !important;
-    border: 1px solid {BORDER_L} !important;
-    font-weight: 700 !important;
+.kpi-info-toggle {{
+    margin-top: .75rem;
+}}
+
+.kpi-info-toggle summary {{
+    list-style: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .38rem;
+    color: {TEXT2};
+    font-size: .72rem;
+    font-weight: 600;
+    user-select: none;
+}}
+
+.kpi-info-toggle summary::-webkit-details-marker {{
+    display: none;
+}}
+
+.kpi-info-icon {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid {TEXT3};
+    color: {TEXT2};
+    font-size: .68rem;
+    font-weight: 800;
+    line-height: 1;
+}}
+
+.kpi-info-panel {{
+    margin-top: .5rem;
+    background: rgba(255,255,255,.05);
+    border: 1px solid {BORDER_L};
+    border-radius: 10px;
+    padding: .58rem .72rem;
+    color: {TEXT2};
+    font-size: .74rem;
+    line-height: 1.5;
+}}
+
+.scenario-wrap {{
+    background: linear-gradient(135deg, {CARD} 0%, {CARD_H} 100%);
+    border: 1px solid {BORDER};
+    border-radius: 16px;
+    padding: 1rem 1.15rem 1.1rem 1.15rem;
+    box-shadow: {SHADOW_SM};
+    margin-bottom: .9rem;
+}}
+
+.scenario-title {{
+    color: {TEXT};
+    font-size: .95rem;
+    font-weight: 700;
+    margin-bottom: .2rem;
+}}
+
+.scenario-subtitle {{
+    color: {TEXT2};
+    font-size: .8rem;
+    margin-bottom: .65rem;
 }}
 </style>
 """,
@@ -352,25 +424,37 @@ def money_text_input(label, value, key, help_text=None):
     return parse_money_input(raw_value, value if value is not None else 0)
 
 
-def kpi_html(label, value, color=PURPLE, icon="", sub=""):
+def kpi_html(label, value, color=PURPLE, icon="", sub="", info=""):
     sub_html = f'<div style="color:{TEXT3};font-size:.7rem;margin-top:.18rem;">{sub}</div>' if sub else ""
     icon_html = f'<span style="font-size:.95rem;margin-right:.25rem;">{icon}</span>' if icon else ""
-    return f"""<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:14px;padding:1.05rem 1.2rem;box-shadow:{SHADOW_SM};position:relative;overflow:hidden;min-height:132px;">
+
+    info_html = ""
+    if info:
+        safe_info = html.escape(info)
+        info_html = f"""
+        <details class="kpi-info-toggle">
+            <summary>
+                <span class="kpi-info-icon">i</span>
+                <span>What is this?</span>
+            </summary>
+            <div class="kpi-info-panel">{safe_info}</div>
+        </details>
+        """
+
+    return f"""<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:14px;padding:1.05rem 1.2rem;box-shadow:{SHADOW_SM};position:relative;overflow:hidden;min-height:156px;">
     <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,{color}88,transparent);"></div>
     <div style="color:{TEXT2};font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;font-weight:500;margin-bottom:.45rem;">{icon_html}{label}</div>
     <div style="font-size:1.45rem;font-weight:800;color:{color};letter-spacing:-.02em;line-height:1.15;">{value}</div>
     {sub_html}
+    {info_html}
     </div>"""
 
 
 def render_kpi_card(label, value, color=PURPLE, icon="", sub="", info=""):
-    st.markdown(kpi_html(label, value, color=color, icon=icon, sub=sub), unsafe_allow_html=True)
-    if info:
-        st.markdown('<div class="info-popover">', unsafe_allow_html=True)
-        with st.popover("ⓘ"):
-            st.markdown(f"**{label}**")
-            st.write(info)
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(
+        kpi_html(label, value, color=color, icon=icon, sub=sub, info=info),
+        unsafe_allow_html=True,
+    )
 
 
 def kpi_small(label, value, color=TEXT):
@@ -654,7 +738,6 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
-    # data quality warnings
     warnings = []
     if cash == 0 and investments == 0 and crypto == 0 and pension_val == 0 and real_estate_equity == 0:
         warnings.append("All monthly asset values are currently zero.")
@@ -737,8 +820,6 @@ tax = calc_uk_tax(taxable_gross, scotland=scotland_tax)
 net_monthly = tax["net_monthly"]
 monthly_pension_contrib = employee_pension_annual / 12
 surplus = net_monthly - monthly_expenses - monthly_invest
-
-# clarified savings rate = chosen monthly investment as % of monthly income
 savings_rate = (monthly_invest / net_monthly * 100) if net_monthly > 0 else 0
 net_worth = cash + investments + crypto + pension_val + real_estate_equity
 years_to_retire = max(1, retirement_age - current_age)
@@ -1070,7 +1151,6 @@ with tab_history:
             display_df["x_label"] = display_df["label"]
 
         fig = go.Figure()
-
         totals = display_df["net_worth"].replace(0, 1)
 
         traces = [
@@ -1206,7 +1286,23 @@ with tab_portfolio:
 with tab_forecast:
     st.markdown(section_header("Wealth Projection", "⟩"), unsafe_allow_html=True)
 
-    scenario_choice = st.selectbox("Choose Scenario", ["Conservative", "Base", "Aggressive"], index=["Conservative", "Base", "Aggressive"].index(st.session_state.selected_scenario))
+    st.markdown(
+        """
+        <div class="scenario-wrap">
+            <div class="scenario-title">Forecast Scenario</div>
+            <div class="scenario-subtitle">Choose the scenario that should drive the forecast summary cards and target timing.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    scenario_choice = st.selectbox(
+        "Forecast Scenario",
+        ["Conservative", "Base", "Aggressive"],
+        index=["Conservative", "Base", "Aggressive"].index(st.session_state.selected_scenario),
+        label_visibility="collapsed",
+    )
+
     if scenario_choice != st.session_state.selected_scenario:
         st.session_state.selected_scenario = scenario_choice
         st.rerun()
@@ -1226,7 +1322,8 @@ with tab_forecast:
         match = selected_df.loc[selected_df["year"] == year, "net_worth"]
         value = match.values[0] if len(match) > 0 else net_worth
         label = f"Year {year}" if year != years_to_retire else f"Retirement ({year}yr)"
-        milestone_cols[idx].markdown(kpi_html(label, gbp(value), BLUE if scenario_choice == "Base" else (CYAN if scenario_choice == "Conservative" else PURPLE), sub=description), unsafe_allow_html=True)
+        color = BLUE if scenario_choice == "Base" else (CYAN if scenario_choice == "Conservative" else PURPLE)
+        milestone_cols[idx].markdown(kpi_html(label, gbp(value), color, sub=description), unsafe_allow_html=True)
 
     spacer(".8rem")
     st.markdown(card_open("Scenario Analysis", f"Currently showing: {scenario_choice}"), unsafe_allow_html=True)
