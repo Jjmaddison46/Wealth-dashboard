@@ -27,8 +27,8 @@ CARD_H = "#182240"
 BORDER = "#1E2A45"
 BORDER_L = "#253255"
 TEXT = "#FFFFFF"
-TEXT2 = "#94A3B8"
-TEXT3 = "#64748B"
+TEXT2 = "#C7D2E3"
+TEXT3 = "#94A3B8"
 
 PURPLE = "#8B5CF6"
 BLUE = "#3B82F6"
@@ -36,6 +36,7 @@ CYAN = "#06B6D4"
 GREEN = "#10B981"
 RED = "#EF4444"
 AMBER = "#F59E0B"
+YELLOW = "#FFD60A"
 WHITE = "#FFFFFF"
 BLACK = "#000000"
 
@@ -151,21 +152,22 @@ section[data-testid="stSidebar"] .block-container {{
 }}
 
 section[data-testid="stSidebar"] p,
-section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] .stMarkdown {{
     color: {TEXT2} !important;
     font-size: .82rem !important;
     font-family: 'Inter', sans-serif !important;
 }}
 
+section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] .stNumberInput label,
 section[data-testid="stSidebar"] .stSlider label,
 section[data-testid="stSidebar"] .stSelectbox label,
 section[data-testid="stSidebar"] .stToggle label,
 section[data-testid="stSidebar"] .stTextInput label {{
-    color: {TEXT2} !important;
-    font-size: .78rem !important;
-    letter-spacing: .02em;
+    color: {WHITE} !important;
+    font-size: .84rem !important;
+    font-weight: 700 !important;
+    letter-spacing: .01em;
 }}
 
 section[data-testid="stSidebar"] input {{
@@ -189,7 +191,7 @@ section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
 }}
 
 section[data-testid="stSidebar"] .stSlider > div {{
-    padding-top: .2rem;
+    padding-top: .15rem;
 }}
 
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div {{
@@ -201,18 +203,33 @@ section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div {
 }}
 
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:first-child {{
-    background: #CBD5E1 !important;
-    opacity: .22 !important;
+    background: rgba(203, 213, 225, 0.18) !important;
 }}
 
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:nth-child(2) {{
-    background: linear-gradient(90deg, #FACC15, #EAB308) !important;
+    background: linear-gradient(90deg, #FFE347, #FFC300) !important;
+    opacity: 1 !important;
 }}
 
 section[data-testid="stSidebar"] .stSlider [role="slider"] {{
     background: #FFFFFF !important;
-    border: 3px solid #94A3B8 !important;
-    box-shadow: 0 0 0 5px rgba(59,130,246,.18) !important;
+    border: 3px solid #D1D5DB !important;
+    box-shadow: 0 0 0 4px rgba(255, 214, 10, 0.18) !important;
+}}
+
+section[data-testid="stSidebar"] .stSlider div,
+section[data-testid="stSidebar"] .stSlider span,
+section[data-testid="stSidebar"] .stSlider p,
+section[data-testid="stSidebar"] .stSlider small {{
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    background: transparent !important;
+    text-shadow: none !important;
+}}
+
+section[data-testid="stSidebar"] .stSlider [data-testid="stWidgetLabel"] * {{
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
 }}
 
 section[data-testid="stSidebar"] .stButton > button {{
@@ -323,51 +340,6 @@ div[data-testid="column"] > div {{
     letter-spacing:.04em;
 }}
 
-.kpi-info-toggle {{
-    margin-top: .75rem;
-}}
-
-.kpi-info-toggle summary {{
-    list-style: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: .38rem;
-    color: {TEXT2};
-    font-size: .72rem;
-    font-weight: 600;
-    user-select: none;
-}}
-
-.kpi-info-toggle summary::-webkit-details-marker {{
-    display: none;
-}}
-
-.kpi-info-icon {{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 999px;
-    border: 1px solid {TEXT3};
-    color: {TEXT2};
-    font-size: .68rem;
-    font-weight: 800;
-    line-height: 1;
-}}
-
-.kpi-info-panel {{
-    margin-top: .5rem;
-    background: rgba(255,255,255,.05);
-    border: 1px solid {BORDER_L};
-    border-radius: 10px;
-    padding: .58rem .72rem;
-    color: {TEXT2};
-    font-size: .74rem;
-    line-height: 1.5;
-}}
-
 .scenario-wrap {{
     background: linear-gradient(135deg, {CARD} 0%, {CARD_H} 100%);
     border: 1px solid {BORDER};
@@ -431,23 +403,27 @@ def kpi_html(label, value, color=PURPLE, icon="", sub="", info=""):
     info_html = ""
     if info:
         safe_info = html.escape(info)
-        info_html = f"""
-        <details class="kpi-info-toggle">
-            <summary>
-                <span class="kpi-info-icon">i</span>
-                <span>What is this?</span>
-            </summary>
-            <div class="kpi-info-panel">{safe_info}</div>
-        </details>
-        """
+        info_html = (
+            f'<div style="margin-top:.7rem;padding:.55rem .7rem;'
+            f'background:rgba(255,255,255,.04);border:1px solid {BORDER_L};'
+            f'border-radius:10px;color:{TEXT2};font-size:.74rem;line-height:1.5;">'
+            f'<span style="color:{TEXT};font-weight:700;">What is this?</span><br>{safe_info}</div>'
+        )
 
-    return f"""<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:14px;padding:1.05rem 1.2rem;box-shadow:{SHADOW_SM};position:relative;overflow:hidden;min-height:156px;">
-    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,{color}88,transparent);"></div>
-    <div style="color:{TEXT2};font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;font-weight:500;margin-bottom:.45rem;">{icon_html}{label}</div>
-    <div style="font-size:1.45rem;font-weight:800;color:{color};letter-spacing:-.02em;line-height:1.15;">{value}</div>
-    {sub_html}
-    {info_html}
-    </div>"""
+    return (
+        f'<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);'
+        f'border:1px solid {BORDER};border-radius:14px;padding:1.05rem 1.2rem;'
+        f'box-shadow:{SHADOW_SM};position:relative;overflow:hidden;min-height:156px;">'
+        f'<div style="position:absolute;top:0;left:0;right:0;height:2px;'
+        f'background:linear-gradient(90deg,{color}88,transparent);"></div>'
+        f'<div style="color:{TEXT2};font-size:.7rem;text-transform:uppercase;'
+        f'letter-spacing:.06em;font-weight:500;margin-bottom:.45rem;">{icon_html}{label}</div>'
+        f'<div style="font-size:1.45rem;font-weight:800;color:{color};'
+        f'letter-spacing:-.02em;line-height:1.15;">{value}</div>'
+        f'{sub_html}'
+        f'{info_html}'
+        f'</div>'
+    )
 
 
 def render_kpi_card(label, value, color=PURPLE, icon="", sub="", info=""):
@@ -478,8 +454,8 @@ def section_header(title, icon=""):
     return f'<div style="display:flex;align-items:center;margin:1.8rem 0 1rem 0;padding-bottom:.55rem;border-bottom:1px solid {BORDER};"><div style="font-size:1.1rem;font-weight:700;color:{TEXT};letter-spacing:-.01em;">{icon_html}{title}</div></div>'
 
 
-def sidebar_label(label, color=PURPLE):
-    return f'<div style="color:{color};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;margin:.8rem 0 .35rem 0;padding-bottom:.25rem;border-bottom:1px solid {BORDER};">{label}</div>'
+def sidebar_label(label, color=WHITE):
+    return f'<div style="color:{color};font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;margin:.8rem 0 .35rem 0;padding-bottom:.25rem;border-bottom:1px solid {BORDER};">{label}</div>'
 
 
 def row_item(label, value, color=TEXT, bold=False):
@@ -679,7 +655,7 @@ with st.sidebar:
     now = datetime.now()
 
     st.markdown("---")
-    st.markdown(sidebar_label("Monthly Snapshot Inputs", PURPLE), unsafe_allow_html=True)
+    st.markdown(sidebar_label("Monthly Snapshot Inputs"), unsafe_allow_html=True)
     st.caption("Update these figures each month and save them to build your wealth history over time.")
 
     col_m, col_y = st.columns(2)
@@ -759,7 +735,7 @@ with st.sidebar:
             )
 
     st.markdown("---")
-    st.markdown(sidebar_label("Current Employment Package and Forecasting Assumptions", CYAN), unsafe_allow_html=True)
+    st.markdown(sidebar_label("Current Employment Package and Forecasting Assumptions"), unsafe_allow_html=True)
     st.caption("These settings are separate from monthly inputs. Update them and apply when ready.")
 
     with st.form("forecast_assumptions_form", clear_on_submit=False):
