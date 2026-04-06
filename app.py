@@ -194,6 +194,11 @@ section[data-testid="stSidebar"] .stSlider > div {{
     padding-top: .15rem;
 }}
 
+section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] {{
+    padding-top: .35rem !important;
+    padding-bottom: .2rem !important;
+}}
+
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div {{
     height: 10px !important;
 }}
@@ -203,23 +208,23 @@ section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div {
 }}
 
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:first-child {{
-    background: rgba(203, 213, 225, 0.18) !important;
+    background: rgba(203, 213, 225, 0.20) !important;
 }}
 
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:nth-child(2) {{
-    background: linear-gradient(90deg, #FFE347, #FFC300) !important;
+    background: linear-gradient(90deg, #FFE347 0%, #FFC300 100%) !important;
     opacity: 1 !important;
 }}
 
 section[data-testid="stSidebar"] .stSlider [role="slider"] {{
     background: #FFFFFF !important;
     border: 3px solid #D1D5DB !important;
-    box-shadow: 0 0 0 4px rgba(255, 214, 10, 0.18) !important;
+    box-shadow: 0 0 0 5px rgba(255, 214, 10, 0.22) !important;
 }}
 
-section[data-testid="stSidebar"] .stSlider div,
-section[data-testid="stSidebar"] .stSlider span,
+section[data-testid="stSidebar"] .stSlider label,
 section[data-testid="stSidebar"] .stSlider p,
+section[data-testid="stSidebar"] .stSlider span,
 section[data-testid="stSidebar"] .stSlider small {{
     color: #FFFFFF !important;
     font-weight: 800 !important;
@@ -229,7 +234,7 @@ section[data-testid="stSidebar"] .stSlider small {{
 
 section[data-testid="stSidebar"] .stSlider [data-testid="stWidgetLabel"] * {{
     color: #FFFFFF !important;
-    font-weight: 700 !important;
+    font-weight: 800 !important;
 }}
 
 section[data-testid="stSidebar"] .stButton > button {{
