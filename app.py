@@ -6,7 +6,6 @@ import os
 import re
 import html
 from datetime import datetime
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PAGE CONFIG
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -16,7 +15,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # DESIGN TOKENS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -29,7 +27,6 @@ BORDER_L = "#253255"
 TEXT = "#FFFFFF"
 TEXT2 = "#C7D2E3"
 TEXT3 = "#94A3B8"
-
 PURPLE = "#8B5CF6"
 BLUE = "#3B82F6"
 CYAN = "#06B6D4"
@@ -37,36 +34,29 @@ GREEN = "#10B981"
 RED = "#EF4444"
 AMBER = "#F59E0B"
 YELLOW = "#FFD60A"
+DEEP_YELLOW = "#E8A308"
 WHITE = "#FFFFFF"
 BLACK = "#000000"
-
 SHADOW = "0 4px 24px rgba(0,0,0,.35), 0 1px 4px rgba(0,0,0,.25)"
 SHADOW_SM = "0 2px 12px rgba(0,0,0,.25)"
-
 MONTHS = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
 ]
-
 LBL_CASH = "Cash Savings"
 LBL_STOCK = "Stock and Shares"
 LBL_CRYPTO = "Crypto"
 LBL_PENSION = "Pension"
 LBL_RE = "Real Estate Equity"
-
 BOLD_WHITE = dict(color=TEXT, size=13, family="Inter, sans-serif")
 BOLD_WHITE_SM = dict(color=TEXT, size=11, family="Inter, sans-serif")
-
 GRID_AXIS = {"gridcolor": BORDER, "gridwidth": 1, "zeroline": False}
 CLEAN_AXIS = {"showgrid": False, "zeroline": False}
 PLT_CFG = {"displayModeBar": False}
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PERSISTENCE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SNAPSHOT_FILE = "wealthview_snapshots.json"
-
-
 def load_snapshots():
     if os.path.exists(SNAPSHOT_FILE):
         try:
@@ -75,39 +65,40 @@ def load_snapshots():
         except (json.JSONDecodeError, IOError):
             return {}
     return {}
-
-
 def save_snapshots(data):
     with open(SNAPSHOT_FILE, "w") as f:
         json.dump(data, f, indent=2)
-
-
 if "snapshots" not in st.session_state:
     st.session_state.snapshots = load_snapshots()
-
 if "snapshot_saved_flag" not in st.session_state:
     st.session_state.snapshot_saved_flag = False
-
 DEFAULT_SETTINGS = {
     "gross_salary": 180_000,
     "annual_bonus": 0,
     "scotland_tax": False,
     "pension_contrib_pct": 3.0,
-    "monthly_invest": 2_000,
+    "monthly_invest_cash": 500,
+    "monthly_invest_stocks": 1_500,
     "monthly_expenses": 0,
     "current_age": 35,
     "retirement_age": 50,
     "target_wealth": 2_000_000,
+    "cash_interest_rate": 4.5,
     "expected_return": 12.0,
     "inflation": 2.5,
     "property_growth": 3.5,
     "selected_scenario": "Base",
 }
-
 for key, value in DEFAULT_SETTINGS.items():
     if key not in st.session_state:
         st.session_state[key] = value
-
+# Backwards compat: migrate old monthly_invest to split
+if "monthly_invest" in st.session_state and "monthly_invest_cash" not in st.session_state:
+    old_val = st.session_state.monthly_invest
+    st.session_state.monthly_invest_cash = 500
+    st.session_state.monthly_invest_stocks = max(0, old_val - 500)
+if "cash_interest_rate" not in st.session_state:
+    st.session_state.cash_interest_rate = 4.5
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # GLOBAL CSS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -115,49 +106,40 @@ st.markdown(
     f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
 *, *::before, *::after {{
     box-sizing: border-box;
 }}
-
 html, body, .stApp {{
     background: {BG} !important;
     color: {TEXT};
     font-family: 'Inter', system-ui, sans-serif !important;
     -webkit-font-smoothing: antialiased;
 }}
-
 header[data-testid="stHeader"] {{
     background: {BG} !important;
     border-bottom: 1px solid {BORDER};
 }}
-
 .block-container {{
     padding: 1.5rem 2rem 2rem 2rem !important;
     max-width: 1460px;
 }}
-
 div[data-testid="stToolbar"] {{
     display: none;
 }}
-
 section[data-testid="stSidebar"] {{
     background: linear-gradient(180deg, {BG_ALT} 0%, #0A0F1E 100%) !important;
     border-right: 1px solid {BORDER} !important;
     width: 345px !important;
 }}
-
 section[data-testid="stSidebar"] .block-container {{
     padding: 1rem 1.2rem 1.5rem 1.2rem !important;
 }}
-
 section[data-testid="stSidebar"] p,
 section[data-testid="stSidebar"] .stMarkdown {{
     color: {TEXT2} !important;
     font-size: .82rem !important;
     font-family: 'Inter', sans-serif !important;
 }}
-
 section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] .stNumberInput label,
 section[data-testid="stSidebar"] .stSlider label,
@@ -169,7 +151,6 @@ section[data-testid="stSidebar"] .stTextInput label {{
     font-weight: 700 !important;
     letter-spacing: .01em;
 }}
-
 section[data-testid="stSidebar"] input {{
     background: {CARD} !important;
     border: 1px solid {BORDER} !important;
@@ -177,51 +158,47 @@ section[data-testid="stSidebar"] input {{
     border-radius: 10px !important;
     font-size: .92rem !important;
 }}
-
 section[data-testid="stSidebar"] [data-baseweb="select"] > div {{
     background: #F8FAFC !important;
     color: {BLACK} !important;
     border-radius: 10px !important;
 }}
-
 section[data-testid="stSidebar"] [data-baseweb="select"] span,
 section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
     color: {BLACK} !important;
     fill: {BLACK} !important;
 }}
 
+/* ── SLIDER STYLING — deep yellow/orange active track ── */
 section[data-testid="stSidebar"] .stSlider > div {{
     padding-top: .15rem;
 }}
-
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] {{
     padding-top: .35rem !important;
     padding-bottom: .2rem !important;
 }}
-
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div {{
     height: 10px !important;
 }}
-
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div {{
     border-radius: 999px !important;
 }}
-
+/* Background (unfilled) track */
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:first-child {{
     background: rgba(203, 213, 225, 0.20) !important;
 }}
-
+/* Active (filled) track — deep yellow/orange */
 section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:nth-child(2) {{
-    background: linear-gradient(90deg, #FFE347 0%, #FFC300 100%) !important;
+    background: linear-gradient(90deg, {DEEP_YELLOW} 0%, #D4920A 100%) !important;
     opacity: 1 !important;
 }}
-
+/* Thumb */
 section[data-testid="stSidebar"] .stSlider [role="slider"] {{
     background: #FFFFFF !important;
-    border: 3px solid #D1D5DB !important;
-    box-shadow: 0 0 0 5px rgba(255, 214, 10, 0.22) !important;
+    border: 3px solid {DEEP_YELLOW} !important;
+    box-shadow: 0 0 0 4px rgba(232,163,8,.22), 0 1px 4px rgba(0,0,0,.3) !important;
 }}
-
+/* Slider text colors */
 section[data-testid="stSidebar"] .stSlider label,
 section[data-testid="stSidebar"] .stSlider p,
 section[data-testid="stSidebar"] .stSlider span,
@@ -231,10 +208,25 @@ section[data-testid="stSidebar"] .stSlider small {{
     background: transparent !important;
     text-shadow: none !important;
 }}
-
 section[data-testid="stSidebar"] .stSlider [data-testid="stWidgetLabel"] * {{
     color: #FFFFFF !important;
     font-weight: 800 !important;
+}}
+
+/* Also style main content area sliders */
+.stSlider [data-baseweb="slider"] > div > div:nth-child(2) {{
+    background: linear-gradient(90deg, {DEEP_YELLOW} 0%, #D4920A 100%) !important;
+    opacity: 1 !important;
+    border-radius: 999px !important;
+}}
+.stSlider [data-baseweb="slider"] > div > div:first-child {{
+    background: rgba(203, 213, 225, 0.20) !important;
+    border-radius: 999px !important;
+}}
+.stSlider [data-baseweb="slider"] [role="slider"] {{
+    background: #FFFFFF !important;
+    border: 3px solid {DEEP_YELLOW} !important;
+    box-shadow: 0 0 0 4px rgba(232,163,8,.22), 0 1px 4px rgba(0,0,0,.3) !important;
 }}
 
 section[data-testid="stSidebar"] .stButton > button {{
@@ -245,28 +237,23 @@ section[data-testid="stSidebar"] .stButton > button {{
     font-weight: 800 !important;
     box-shadow: none !important;
 }}
-
 section[data-testid="stSidebar"] .stButton > button:hover {{
     background: #F3F4F6 !important;
     color: {BLACK} !important;
     border: 1px solid #F3F4F6 !important;
 }}
-
 div[data-testid="stMetric"] {{
     display: none;
 }}
-
 .stTabs {{
     margin-top: .25rem;
 }}
-
 .stTabs [data-baseweb="tab-list"] {{
     gap: 0;
     border-bottom: 1px solid {BORDER};
     background: transparent;
     padding: 0 .5rem;
 }}
-
 .stTabs [data-baseweb="tab"] {{
     color: {TEXT3} !important;
     background: transparent !important;
@@ -279,46 +266,37 @@ div[data-testid="stMetric"] {{
     transition: all .2s ease;
     font-family: 'Inter', sans-serif !important;
 }}
-
 .stTabs [data-baseweb="tab"]:hover {{
     color: {TEXT2} !important;
     background: {CARD}55 !important;
 }}
-
 .stTabs [aria-selected="true"] {{
     color: {PURPLE} !important;
     background: {CARD} !important;
     border-bottom: 2px solid {PURPLE} !important;
     font-weight: 600;
 }}
-
 .stTabs [data-baseweb="tab-highlight"],
 .stTabs [data-baseweb="tab-border"] {{
     display: none;
 }}
-
 .js-plotly-plot, .plotly {{
     background: transparent !important;
 }}
-
 ::-webkit-scrollbar {{
     width: 6px;
     height: 6px;
 }}
-
 ::-webkit-scrollbar-track {{
     background: {BG};
 }}
-
 ::-webkit-scrollbar-thumb {{
     background: {BORDER_L};
     border-radius: 3px;
 }}
-
 div[data-testid="column"] > div {{
     padding: 0 .3rem;
 }}
-
 .wealthview-header {{
     display:flex;
     align-items:baseline;
@@ -327,7 +305,6 @@ div[data-testid="column"] > div {{
     padding-top: .25rem;
     overflow: visible;
 }}
-
 .wealthview-title {{
     font-size:1.95rem;
     font-weight:900;
@@ -338,13 +315,11 @@ div[data-testid="column"] > div {{
     line-height:1.2;
     display:inline-block;
 }}
-
 .wealthview-subtitle {{
     color:{TEXT3};
     font-size:.78rem;
     letter-spacing:.04em;
 }}
-
 .scenario-wrap {{
     background: linear-gradient(135deg, {CARD} 0%, {CARD_H} 100%);
     border: 1px solid {BORDER};
@@ -353,14 +328,12 @@ div[data-testid="column"] > div {{
     box-shadow: {SHADOW_SM};
     margin-bottom: .9rem;
 }}
-
 .scenario-title {{
     color: {TEXT};
     font-size: .95rem;
     font-weight: 700;
     margin-bottom: .2rem;
 }}
-
 .scenario-subtitle {{
     color: {TEXT2};
     font-size: .8rem;
@@ -370,19 +343,14 @@ div[data-testid="column"] > div {{
 """,
     unsafe_allow_html=True,
 )
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # HELPERS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def gbp(v):
     sign = "-" if v < 0 else ""
     return f"{sign}£{abs(v):,.0f}"
-
-
 def pct_fmt(v):
     return f"{v:.1f}%"
-
-
 def parse_money_input(value, default=0):
     if value is None:
         return default
@@ -393,18 +361,13 @@ def parse_money_input(value, default=0):
         return int(cleaned)
     except ValueError:
         return default
-
-
 def money_text_input(label, value, key, help_text=None):
     formatted_default = f"{int(value):,}" if value is not None else "0"
     raw_value = st.text_input(label, value=formatted_default, key=key, help=help_text)
     return parse_money_input(raw_value, value if value is not None else 0)
-
-
 def kpi_html(label, value, color=PURPLE, icon="", sub="", info=""):
     sub_html = f'<div style="color:{TEXT3};font-size:.7rem;margin-top:.18rem;">{sub}</div>' if sub else ""
     icon_html = f'<span style="font-size:.95rem;margin-right:.25rem;">{icon}</span>' if icon else ""
-
     info_html = ""
     if info:
         safe_info = html.escape(info)
@@ -414,7 +377,6 @@ def kpi_html(label, value, color=PURPLE, icon="", sub="", info=""):
             f'border-radius:10px;color:{TEXT2};font-size:.74rem;line-height:1.5;">'
             f'<span style="color:{TEXT};font-weight:700;">What is this?</span><br>{safe_info}</div>'
         )
-
     return (
         f'<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);'
         f'border:1px solid {BORDER};border-radius:14px;padding:1.05rem 1.2rem;'
@@ -429,54 +391,34 @@ def kpi_html(label, value, color=PURPLE, icon="", sub="", info=""):
         f'{info_html}'
         f'</div>'
     )
-
-
 def render_kpi_card(label, value, color=PURPLE, icon="", sub="", info=""):
     st.markdown(
         kpi_html(label, value, color=color, icon=icon, sub=sub, info=info),
         unsafe_allow_html=True,
     )
-
-
 def kpi_small(label, value, color=TEXT):
     return f"""<div style="background:{CARD};border:1px solid {BORDER};border-radius:10px;padding:.75rem .9rem;text-align:center;">
     <div style="color:{TEXT3};font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;font-weight:500;">{label}</div>
     <div style="font-size:1.1rem;font-weight:700;color:{color};margin-top:.2rem;">{value}</div></div>"""
-
-
 def card_open(title="", subtitle=""):
     sub = f'<span style="color:{TEXT3};font-size:.72rem;font-weight:400;margin-left:.5rem;">{subtitle}</span>' if subtitle else ""
     h = f'<div style="color:{TEXT};font-size:.95rem;font-weight:600;margin-bottom:.7rem;letter-spacing:-.01em;">{title}{sub}</div>' if title else ""
     return f'<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:16px;padding:1.3rem 1.5rem;box-shadow:{SHADOW};margin-bottom:.8rem;">{h}'
-
-
 def card_close():
     return "</div>"
-
-
 def section_header(title, icon=""):
     icon_html = f'<span style="margin-right:.4rem;">{icon}</span>' if icon else ""
     return f'<div style="display:flex;align-items:center;margin:1.8rem 0 1rem 0;padding-bottom:.55rem;border-bottom:1px solid {BORDER};"><div style="font-size:1.1rem;font-weight:700;color:{TEXT};letter-spacing:-.01em;">{icon_html}{title}</div></div>'
-
-
 def sidebar_label(label, color=WHITE):
     return f'<div style="color:{color};font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;margin:.8rem 0 .35rem 0;padding-bottom:.25rem;border-bottom:1px solid {BORDER};">{label}</div>'
-
-
 def row_item(label, value, color=TEXT, bold=False):
     fw = "700" if bold else "500"
     return f'<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid {BORDER}08;"><span style="color:{TEXT2};font-size:.84rem;">{label}</span><span style="color:{color};font-weight:{fw};font-size:.9rem;">{value}</span></div>'
-
-
 def progress_bar_html(pct_val, color_from=PURPLE, color_to=CYAN, height=8):
     w = max(0, min(100, pct_val))
     return f'<div style="background:{BORDER};border-radius:{height}px;height:{height}px;width:100%;margin-top:.3rem;overflow:hidden;"><div style="width:{w}%;height:100%;border-radius:{height}px;background:linear-gradient(90deg,{color_from},{color_to});transition:width .6s ease;"></div></div>'
-
-
 def spacer(h="1rem"):
     st.markdown(f'<div style="height:{h}"></div>', unsafe_allow_html=True)
-
-
 def make_layout(overrides=None):
     base = {
         "paper_bgcolor": "rgba(0,0,0,0)",
@@ -489,19 +431,14 @@ def make_layout(overrides=None):
     if overrides:
         base.update(overrides)
     return base
-
-
 def years_to_target(df, target):
     reached = df[df["net_worth"] >= target]
     if len(reached) == 0:
         return None
     return int(reached.iloc[0]["year"])
-
-
 def build_history_df(snaps):
     if not snaps:
         return pd.DataFrame()
-
     rows = []
     for pk, sd in sorted(snaps.items()):
         try:
@@ -510,11 +447,9 @@ def build_history_df(snaps):
             month = int(month)
         except (ValueError, IndexError):
             continue
-
         re_val = sd.get("real_estate_equity", 0)
         crypto_val = sd.get("crypto", 0)
         net_worth = sd.get("net_worth", sd.get("cash", 0) + sd.get("investments", 0) + crypto_val + sd.get("pension", 0) + re_val)
-
         rows.append({
             "period_key": pk,
             "date": datetime(year, month, 1),
@@ -526,16 +461,13 @@ def build_history_df(snaps):
             "real_estate_equity": re_val,
             "net_worth": net_worth,
         })
-
     df = pd.DataFrame(rows).sort_values("date").reset_index(drop=True)
     if df.empty:
         return df
-
     df["nw_change"] = df["net_worth"].diff()
     df["nw_change_pct"] = df["net_worth"].pct_change() * 100
     df["year"] = df["date"].dt.year
     return df
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # TAX ENGINE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -544,7 +476,6 @@ def calc_uk_tax(gross, scotland=False):
     if gross > 100_000:
         personal_allowance = max(0, personal_allowance - (gross - 100_000) / 2)
     taxable = max(0, gross - personal_allowance)
-
     if scotland:
         bands = [
             (2_162, 0.19),
@@ -559,11 +490,9 @@ def calc_uk_tax(gross, scotland=False):
             (87_440, 0.40),
             (float("inf"), 0.45),
         ]
-
     income_tax = 0.0
     remaining = taxable
     band_breakdown = []
-
     for width, rate in bands:
         amount = min(remaining, width)
         tax = amount * rate
@@ -573,17 +502,14 @@ def calc_uk_tax(gross, scotland=False):
         remaining -= amount
         if remaining <= 0:
             break
-
     ni = 0.0
     if gross > 12_570:
         ni += max(0, min(gross, 50_270) - 12_570) * 0.08
     if gross > 50_270:
         ni += (gross - 50_270) * 0.02
-
     total_deductions = income_tax + ni
     net_annual = gross - total_deductions
     effective_rate = (total_deductions / gross * 100) if gross > 0 else 0
-
     return {
         "gross": gross,
         "personal_allowance": personal_allowance,
@@ -596,18 +522,19 @@ def calc_uk_tax(gross, scotland=False):
         "effective_rate": effective_rate,
         "band_breakdown": band_breakdown,
     }
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# FORECAST ENGINE
+# FORECAST ENGINE (updated: separate cash vs stock growth)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def forecast_wealth(
     starting_cash,
     starting_invested,
     starting_pension,
     starting_real_estate_equity,
-    monthly_invest,
+    monthly_invest_cash,
+    monthly_invest_stocks,
     monthly_pension,
-    expected_return,
+    cash_interest_rate,
+    stock_return,
     inflation,
     real_estate_growth,
     years,
@@ -618,11 +545,9 @@ def forecast_wealth(
     invested_value = starting_invested
     pension_value = starting_pension
     real_estate_value = starting_real_estate_equity
-
     for year in range(0, years + 1):
         net_worth = cash_value + invested_value + pension_value + real_estate_value
         real_factor = 1 / ((1 + inflation / 100) ** year) if year > 0 else 1
-
         rows.append({
             "year": year,
             "cash": cash_value,
@@ -632,17 +557,15 @@ def forecast_wealth(
             "net_worth": net_worth,
             "net_worth_real": net_worth * real_factor,
         })
-
         if year < years:
-            invested_value *= (1 + expected_return / 100)
-            pension_value *= (1 + expected_return / 100)
+            cash_value *= (1 + cash_interest_rate / 100)
+            invested_value *= (1 + stock_return / 100)
+            pension_value *= (1 + stock_return / 100)
             real_estate_value *= (1 + real_estate_growth / 100)
-
-            invested_value += monthly_invest * 12
+            cash_value += monthly_invest_cash * 12
+            invested_value += monthly_invest_stocks * 12
             pension_value += monthly_pension * 12 + employer_pension_annual
-
     return pd.DataFrame(rows)
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # SIDEBAR
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -656,35 +579,33 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
-
     now = datetime.now()
-
     st.markdown("---")
     st.markdown(sidebar_label("Monthly Snapshot Inputs"), unsafe_allow_html=True)
-    st.caption("Update these figures each month and save them to build your wealth history over time.")
-
+    st.markdown(
+        f'<div style="background:{PURPLE}12;border:1px solid {PURPLE}33;border-radius:10px;padding:.55rem .75rem;margin-bottom:.6rem;">'
+        f'<span style="color:{TEXT2};font-size:.76rem;">Enter the current value of each asset class for the selected month. '
+        f'These values are saved as a monthly snapshot to track your wealth over time.</span></div>',
+        unsafe_allow_html=True,
+    )
     col_m, col_y = st.columns(2)
     with col_m:
         selected_month = st.selectbox("Reporting Month", MONTHS, index=now.month - 1)
     with col_y:
         selected_year = st.selectbox("Reporting Year", list(range(2020, now.year + 2)), index=min(now.year - 2020, now.year + 1 - 2020))
-
     period_key = f"{selected_year}-{MONTHS.index(selected_month)+1:02d}"
     period_label = f"{selected_month} {selected_year}"
     existing_snapshot = st.session_state.snapshots.get(period_key, {})
-
     if existing_snapshot:
         st.markdown(
             f'<div style="background:{AMBER}12;border:1px solid {AMBER}33;border-radius:10px;padding:.55rem .75rem;margin-bottom:.6rem;"><span style="color:{AMBER};font-size:.78rem;font-weight:700;">Editing existing snapshot for {period_label}</span></div>',
             unsafe_allow_html=True,
         )
-
     cash = money_text_input("Cash Savings (£)", existing_snapshot.get("cash", 25_000), f"cash_snapshot_{period_key}")
     investments = money_text_input("Stock and Shares (£)", existing_snapshot.get("investments", 85_000), f"investments_snapshot_{period_key}")
     crypto = money_text_input("Crypto (£)", existing_snapshot.get("crypto", 0), f"crypto_snapshot_{period_key}")
     pension_val = money_text_input("Pension (£)", existing_snapshot.get("pension", 42_000), f"pension_snapshot_{period_key}")
     real_estate_equity = money_text_input("Real Estate Equity Value (£)", existing_snapshot.get("real_estate_equity", 130_000), f"real_estate_equity_snapshot_{period_key}")
-
     if st.button("Save Monthly Input", use_container_width=True):
         snapshot_data = {
             "cash": cash,
@@ -699,26 +620,22 @@ with st.sidebar:
             merged = st.session_state.snapshots[period_key].copy()
             merged.update(snapshot_data)
             snapshot_data = merged
-
         st.session_state.snapshots[period_key] = snapshot_data
         save_snapshots(st.session_state.snapshots)
         st.session_state.snapshot_saved_flag = True
         st.rerun()
-
     if st.session_state.snapshot_saved_flag:
         st.markdown(
             f'<div style="background:{GREEN}18;border:1px solid {GREEN}44;border-radius:8px;padding:.5rem .7rem;text-align:center;margin-top:.45rem;"><span style="color:{GREEN};font-size:.8rem;font-weight:700;">Monthly input saved for {period_label}</span></div>',
             unsafe_allow_html=True,
         )
         st.session_state.snapshot_saved_flag = False
-
     snapshot_count = len(st.session_state.snapshots)
     if snapshot_count > 0:
         st.markdown(
             f'<div style="color:{TEXT3};font-size:.72rem;text-align:center;margin-top:.4rem;">{snapshot_count} snapshot{"s" if snapshot_count != 1 else ""} saved</div>',
             unsafe_allow_html=True,
         )
-
     warnings = []
     if cash == 0 and investments == 0 and crypto == 0 and pension_val == 0 and real_estate_equity == 0:
         warnings.append("All monthly asset values are currently zero.")
@@ -731,40 +648,66 @@ with st.sidebar:
     ]:
         if value > 50_000_000:
             warnings.append(f"{label} looks unusually high.")
-
     if warnings:
         for warning in warnings:
             st.markdown(
                 f'<div style="background:{RED}12;border:1px solid {RED}33;border-radius:10px;padding:.5rem .7rem;margin-top:.45rem;"><span style="color:{RED};font-size:.78rem;font-weight:600;">{warning}</span></div>',
                 unsafe_allow_html=True,
             )
-
     st.markdown("---")
-    st.markdown(sidebar_label("Current Employment Package and Forecasting Assumptions"), unsafe_allow_html=True)
-    st.caption("These settings are separate from monthly inputs. Update them and apply when ready.")
-
+    st.markdown(sidebar_label("Employment, Contributions & Forecast Assumptions"), unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="background:{CYAN}12;border:1px solid {CYAN}33;border-radius:10px;padding:.55rem .75rem;margin-bottom:.6rem;">'
+        f'<span style="color:{TEXT2};font-size:.76rem;">These settings control the salary calculator, cash flow analysis, and wealth forecasts. '
+        f'They are independent of the monthly snapshot inputs above. Update and click the button below to apply.</span></div>',
+        unsafe_allow_html=True,
+    )
     with st.form("forecast_assumptions_form", clear_on_submit=False):
+        st.markdown(
+            f'<div style="color:{AMBER};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Employment Package</div>',
+            unsafe_allow_html=True,
+        )
         draft_gross_salary = money_text_input("Gross Salary (£/yr)", st.session_state.gross_salary, "gross_salary_input")
         draft_annual_bonus = money_text_input("Annual Bonus (£)", st.session_state.annual_bonus, "annual_bonus_input")
         draft_scotland_tax = st.toggle("Scottish Tax Bands", value=st.session_state.scotland_tax)
         draft_pension_contrib_pct = st.slider("Pension Contribution %", 0.0, 30.0, float(st.session_state.pension_contrib_pct), 0.5)
 
-        draft_monthly_invest = money_text_input("Monthly Investment (£)", st.session_state.monthly_invest, "monthly_invest_input")
-        draft_current_age = st.number_input("Current Age", 18, 80, int(st.session_state.current_age))
-        draft_retirement_age = st.number_input("Retirement Age", 30, 90, int(st.session_state.retirement_age))
-        draft_target_wealth = money_text_input("Target Wealth (£)", st.session_state.target_wealth, "target_wealth_input")
-        draft_expected_return = st.slider("Expected Return %", 0.0, 15.0, float(st.session_state.expected_return), 0.5)
+        st.markdown(
+            f'<div style="color:{AMBER};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Monthly Investment Contributions</div>',
+            unsafe_allow_html=True,
+        )
+        draft_monthly_invest_cash = money_text_input("Monthly Cash Savings (£)", st.session_state.monthly_invest_cash, "monthly_invest_cash_input",
+                                                      help_text="Amount added to cash savings each month")
+        draft_monthly_invest_stocks = money_text_input("Monthly Stock Investment (£)", st.session_state.monthly_invest_stocks, "monthly_invest_stocks_input",
+                                                        help_text="Amount invested in stocks and shares each month")
+
+        st.markdown(
+            f'<div style="color:{AMBER};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Growth Rate Assumptions</div>',
+            unsafe_allow_html=True,
+        )
+        draft_cash_interest_rate = st.slider("Cash Interest Rate %", 0.0, 10.0, float(st.session_state.cash_interest_rate), 0.1,
+                                              help="Annual interest rate on cash savings (e.g. savings account / cash ISA)")
+        draft_expected_return = st.slider("Stock & Shares Expected Return %", 0.0, 15.0, float(st.session_state.expected_return), 0.5,
+                                           help="Annual expected return on stock investments, crypto, and pension")
         draft_inflation = st.slider("Inflation %", 0.0, 10.0, float(st.session_state.inflation), 0.1)
         draft_property_growth = st.slider("Yearly Real Estate Growth %", 0.0, 10.0, float(st.session_state.property_growth), 0.5)
 
+        st.markdown(
+            f'<div style="color:{AMBER};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Planning & Goals</div>',
+            unsafe_allow_html=True,
+        )
+        draft_current_age = st.number_input("Current Age", 18, 80, int(st.session_state.current_age))
+        draft_retirement_age = st.number_input("Retirement Age", 30, 90, int(st.session_state.retirement_age))
+        draft_target_wealth = money_text_input("Target Wealth (£)", st.session_state.target_wealth, "target_wealth_input")
         forecast_submit = st.form_submit_button("Update Forecast Assumptions", use_container_width=True)
-
     if forecast_submit:
         st.session_state.gross_salary = draft_gross_salary
         st.session_state.annual_bonus = draft_annual_bonus
         st.session_state.scotland_tax = draft_scotland_tax
         st.session_state.pension_contrib_pct = draft_pension_contrib_pct
-        st.session_state.monthly_invest = draft_monthly_invest
+        st.session_state.monthly_invest_cash = draft_monthly_invest_cash
+        st.session_state.monthly_invest_stocks = draft_monthly_invest_stocks
+        st.session_state.cash_interest_rate = draft_cash_interest_rate
         st.session_state.current_age = draft_current_age
         st.session_state.retirement_age = draft_retirement_age
         st.session_state.target_wealth = draft_target_wealth
@@ -772,95 +715,93 @@ with st.sidebar:
         st.session_state.inflation = draft_inflation
         st.session_state.property_growth = draft_property_growth
         st.rerun()
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # BUILD HISTORY & CURRENT CALCULATIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 history_df = build_history_df(st.session_state.snapshots)
-
 gross_salary = st.session_state.gross_salary
 annual_bonus = st.session_state.annual_bonus
 scotland_tax = st.session_state.scotland_tax
 pension_contrib_pct = st.session_state.pension_contrib_pct
-monthly_invest = st.session_state.monthly_invest
+monthly_invest_cash = st.session_state.monthly_invest_cash
+monthly_invest_stocks = st.session_state.monthly_invest_stocks
+monthly_invest = monthly_invest_cash + monthly_invest_stocks
 monthly_expenses = st.session_state.monthly_expenses
 current_age = st.session_state.current_age
 retirement_age = st.session_state.retirement_age
 target_wealth = st.session_state.target_wealth
+cash_interest_rate = st.session_state.cash_interest_rate
 expected_return = st.session_state.expected_return
 inflation = st.session_state.inflation
 property_growth = st.session_state.property_growth
 selected_scenario = st.session_state.selected_scenario
-
 total_gross = gross_salary + annual_bonus
 employee_pension_annual = gross_salary * pension_contrib_pct / 100
 employer_pension_annual = gross_salary * 0.03
 taxable_gross = total_gross - employee_pension_annual
 tax = calc_uk_tax(taxable_gross, scotland=scotland_tax)
-
 net_monthly = tax["net_monthly"]
 monthly_pension_contrib = employee_pension_annual / 12
 surplus = net_monthly - monthly_expenses - monthly_invest
 savings_rate = (monthly_invest / net_monthly * 100) if net_monthly > 0 else 0
 net_worth = cash + investments + crypto + pension_val + real_estate_equity
 years_to_retire = max(1, retirement_age - current_age)
-
 df_con = forecast_wealth(
     starting_cash=cash,
     starting_invested=investments + crypto,
     starting_pension=pension_val,
     starting_real_estate_equity=real_estate_equity,
-    monthly_invest=monthly_invest,
+    monthly_invest_cash=monthly_invest_cash,
+    monthly_invest_stocks=monthly_invest_stocks,
     monthly_pension=monthly_pension_contrib,
-    expected_return=max(0, expected_return - 2),
+    cash_interest_rate=cash_interest_rate,
+    stock_return=max(0, expected_return - 2),
     inflation=inflation,
     real_estate_growth=property_growth,
     years=years_to_retire,
     employer_pension_annual=employer_pension_annual,
 )
-
 df_base = forecast_wealth(
     starting_cash=cash,
     starting_invested=investments + crypto,
     starting_pension=pension_val,
     starting_real_estate_equity=real_estate_equity,
-    monthly_invest=monthly_invest,
+    monthly_invest_cash=monthly_invest_cash,
+    monthly_invest_stocks=monthly_invest_stocks,
     monthly_pension=monthly_pension_contrib,
-    expected_return=expected_return,
+    cash_interest_rate=cash_interest_rate,
+    stock_return=expected_return,
     inflation=inflation,
     real_estate_growth=property_growth,
     years=years_to_retire,
     employer_pension_annual=employer_pension_annual,
 )
-
 df_agg = forecast_wealth(
     starting_cash=cash,
     starting_invested=investments + crypto,
     starting_pension=pension_val,
     starting_real_estate_equity=real_estate_equity,
-    monthly_invest=monthly_invest,
+    monthly_invest_cash=monthly_invest_cash,
+    monthly_invest_stocks=monthly_invest_stocks,
     monthly_pension=monthly_pension_contrib,
-    expected_return=expected_return + 2,
+    cash_interest_rate=cash_interest_rate,
+    stock_return=expected_return + 2,
     inflation=inflation,
     real_estate_growth=property_growth,
     years=years_to_retire,
     employer_pension_annual=employer_pension_annual,
 )
-
 scenario_map = {
     "Conservative": (df_con, max(0, expected_return - 2)),
     "Base": (df_base, expected_return),
     "Aggressive": (df_agg, expected_return + 2),
 }
-
 selected_df, selected_return = scenario_map[selected_scenario]
 target_years = years_to_target(selected_df, target_wealth)
 forecast_10_year = selected_df.loc[selected_df["year"] == min(10, years_to_retire), "net_worth"]
 forecast_10_year_value = forecast_10_year.values[0] if len(forecast_10_year) > 0 else net_worth
-
 goal_progress = min(100, net_worth / target_wealth * 100) if target_wealth > 0 else 0
 goal_gap = max(0, target_wealth - net_worth)
-
 if years_to_retire > 0 and selected_return > 0:
     r_monthly = selected_return / 100 / 12
     periods = years_to_retire * 12
@@ -869,7 +810,6 @@ if years_to_retire > 0 and selected_return > 0:
     required_monthly = shortfall * r_monthly / (((1 + r_monthly) ** periods) - 1) if shortfall > 0 else 0
 else:
     required_monthly = 0
-
 asset_values = {
     LBL_CASH: cash,
     LBL_STOCK: investments,
@@ -879,7 +819,6 @@ asset_values = {
 }
 largest_asset_label = max(asset_values, key=asset_values.get) if asset_values else ""
 largest_asset_pct = (asset_values[largest_asset_label] / net_worth * 100) if net_worth > 0 else 0
-
 if not history_df.empty and len(history_df) >= 2:
     latest_change = history_df.iloc[-1]["nw_change"]
     if latest_change > 0:
@@ -894,9 +833,7 @@ if not history_df.empty and len(history_df) >= 2:
 else:
     momentum_label = "Building history"
     momentum_color = TEXT2
-
 latest_saved_period = history_df.iloc[-1]["label"] if not history_df.empty else "No saved history yet"
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # HEADER
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -909,52 +846,58 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# GETTING STARTED
+# GETTING STARTED (rewritten for clarity)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.expander("Getting Started — How to Use This Dashboard", expanded=False):
     st.markdown(
         f"""
 <div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:14px;padding:1.2rem 1.4rem;">
-<div style="color:{TEXT};font-size:.95rem;font-weight:600;margin-bottom:.8rem;">Quick Start Guide</div>
+<div style="color:{TEXT};font-size:.95rem;font-weight:600;margin-bottom:.3rem;">Quick Start Guide</div>
+<div style="color:{TEXT2};font-size:.82rem;margin-bottom:.8rem;">The sidebar has <b style="color:{WHITE}">two separate input sections</b> that serve different purposes. Make sure you use both.</div>
 
-<div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid {BORDER};">
-<div style="min-width:32px;height:32px;border-radius:8px;background:{PURPLE}22;border:1px solid {PURPLE}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{PURPLE};">1</div>
-<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Select a Reporting Period</div>
-<div style="color:{TEXT2};font-size:.8rem;">Choose the month and year in the sidebar that your figures relate to.</div></div></div>
+<div style="background:{PURPLE}12;border:1px solid {PURPLE}33;border-radius:12px;padding:.85rem 1rem;margin-bottom:.7rem;">
+<div style="color:{PURPLE};font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;">Section 1 — Monthly Snapshot Inputs</div>
+<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;">
+These capture the <b style="color:{WHITE}">current value of each asset</b> for a specific month and year. Update these each month to build your wealth history over time.
+</div>
+<div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.5rem;">
+<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Cash Savings</span>
+<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Stock and Shares</span>
+<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Crypto</span>
+<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Pension</span>
+<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Real Estate Equity</span>
+</div>
+<div style="color:{TEXT3};font-size:.74rem;margin-top:.45rem;">Click <b style="color:{WHITE};">Save Monthly Input</b> after entering your values. You can go back and edit any previous month.</div>
+</div>
 
-<div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid {BORDER};">
-<div style="min-width:32px;height:32px;border-radius:8px;background:{BLUE}22;border:1px solid {BLUE}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{BLUE};">2</div>
-<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Enter Monthly Asset Inputs</div>
-<div style="color:{TEXT2};font-size:.8rem;">Add Cash Savings, Stock and Shares, Crypto, Pension, and Real Estate Equity Value.</div></div></div>
+<div style="background:{CYAN}12;border:1px solid {CYAN}33;border-radius:12px;padding:.85rem 1rem;margin-bottom:.7rem;">
+<div style="color:{CYAN};font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;">Section 2 — Employment, Contributions & Forecast Assumptions</div>
+<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;">
+These settings drive your <b style="color:{WHITE}">salary calculator, cash flow analysis, and wealth forecasts</b>. They are completely separate from the monthly snapshot inputs and do not need updating each month — only when your circumstances change.
+</div>
+<div style="color:{TEXT3};font-size:.74rem;margin-top:.45rem;">This section includes your salary, investment contributions (split into <b style="color:{WHITE};">cash savings</b> and <b style="color:{WHITE};">stock investments</b> with separate growth rates), pension contribution %, age, target wealth, and return assumptions. Click <b style="color:{WHITE};">Update Forecast Assumptions</b> to apply changes.</div>
+</div>
 
-<div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid {BORDER};">
-<div style="min-width:32px;height:32px;border-radius:8px;background:{CYAN}22;border:1px solid {CYAN}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{CYAN};">3</div>
-<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Click Save Monthly Input</div>
-<div style="color:{TEXT2};font-size:.8rem;">This creates or updates the snapshot for that month and year.</div></div></div>
-
-<div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid {BORDER};">
-<div style="min-width:32px;height:32px;border-radius:8px;background:{GREEN}22;border:1px solid {GREEN}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{GREEN};">4</div>
-<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Update Planning Inputs Separately</div>
-<div style="color:{TEXT2};font-size:.8rem;">Edit salary, contribution, age, and forecast assumptions, then click <b>Update Forecast Assumptions</b>.</div></div></div>
+<div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-top:1px solid {BORDER};">
+<div style="min-width:32px;height:32px;border-radius:8px;background:{GREEN}22;border:1px solid {GREEN}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{GREEN};">3</div>
+<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Explore the Dashboard Tabs</div>
+<div style="color:{TEXT2};font-size:.8rem;"><b>Overview</b> and <b>History</b> show your wealth progress. <b>Portfolio</b> shows your investment allocation including cash. <b>Forecast</b> and <b>Goals</b> support long-term planning. <b>Cash Flow</b> and <b>Salary Calculator</b> help with monthly budgeting.</div></div></div>
 
 <div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;">
-<div style="min-width:32px;height:32px;border-radius:8px;background:{AMBER}22;border:1px solid {AMBER}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{AMBER};">5</div>
-<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Use the Product Views</div>
-<div style="color:{TEXT2};font-size:.8rem;">Overview and History show wealth progress. Forecast and Goals support planning. Cash Flow and Salary Calculator help with day-to-day management.</div></div></div>
+<div style="min-width:32px;height:32px;border-radius:8px;background:{AMBER}22;border:1px solid {AMBER}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{AMBER};">4</div>
+<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Key Tip</div>
+<div style="color:{TEXT2};font-size:.8rem;">Save monthly snapshots regularly to build a rich history of your wealth trajectory. Update employment and forecast settings only when your income, contributions, or goals change.</div></div></div>
 </div>
 """,
         unsafe_allow_html=True,
     )
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # TABS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 tab_overview, tab_history, tab_portfolio, tab_forecast, tab_goals, tab_assumptions, tab_cashflow, tab_salary = st.tabs(
     ["Overview", "History", "Portfolio", "Forecast", "Goals", "Assumptions", "Cash Flow", "Salary Calculator"]
 )
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # OVERVIEW
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -964,7 +907,6 @@ with tab_overview:
     badge_b.markdown(kpi_small("Latest Saved Period", latest_saved_period, TEXT), unsafe_allow_html=True)
     badge_c.markdown(kpi_small("Momentum", momentum_label, momentum_color), unsafe_allow_html=True)
     badge_d.markdown(kpi_small("Saved Snapshots", str(len(st.session_state.snapshots)), CYAN), unsafe_allow_html=True)
-
     st.markdown(section_header("Financial Net Worth Snapshot", "◈"), unsafe_allow_html=True)
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
@@ -981,7 +923,7 @@ with tab_overview:
             gbp(cash),
             color=CYAN,
             icon="◇",
-            info="Cash held in savings or cash-based accounts.",
+            info=f"Cash held in savings or cash-based accounts. Growing at {pct_fmt(cash_interest_rate)} p.a.",
         )
     with c3:
         render_kpi_card(
@@ -989,7 +931,7 @@ with tab_overview:
             gbp(investments),
             color=BLUE,
             icon="△",
-            info="The current value of your stock and shares investments.",
+            info=f"The current value of your stock and shares investments. Expected return: {pct_fmt(expected_return)} p.a.",
         )
     with c4:
         render_kpi_card(
@@ -1007,7 +949,6 @@ with tab_overview:
             icon="◎",
             info="The current value of your pension pot.",
         )
-
     spacer(".55rem")
     c6, c7, c8, c9 = st.columns(4)
     with c6:
@@ -1032,7 +973,7 @@ with tab_overview:
             pct_fmt(savings_rate),
             color=PURPLE,
             icon="◉",
-            info="Calculated as your chosen monthly investment contribution divided by your net monthly income.",
+            info="Calculated as your total monthly investment contributions (cash + stocks) divided by your net monthly income.",
         )
     with c9:
         render_kpi_card(
@@ -1042,17 +983,14 @@ with tab_overview:
             icon="⟩",
             info=f"Projected net worth in 10 years under the selected {selected_scenario.lower()} scenario.",
         )
-
     if largest_asset_pct >= 50:
         st.markdown(
             f'<div style="background:{AMBER}12;border:1px solid {AMBER}33;border-radius:12px;padding:.7rem .9rem;margin-top:.6rem;"><span style="color:{AMBER};font-size:.84rem;font-weight:700;">Allocation Warning:</span> <span style="color:{TEXT2};font-size:.84rem;">{largest_asset_label} makes up {largest_asset_pct:.0f}% of your current net worth.</span></div>',
             unsafe_allow_html=True,
         )
-
     spacer("1rem")
     st.markdown(section_header("Wealth Composition"), unsafe_allow_html=True)
     left, right = st.columns([1, 1.1])
-
     with left:
         st.markdown(card_open("Net Worth Allocation"), unsafe_allow_html=True)
         fig = go.Figure(go.Pie(
@@ -1071,7 +1009,6 @@ with tab_overview:
         fig.add_annotation(text="NET WORTH", x=0.5, y=0.43, font=dict(size=8.5, color=TEXT3, family="Inter"), showarrow=False)
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
-
     with right:
         st.markdown(card_open("Asset Breakdown"), unsafe_allow_html=True)
         fig = go.Figure(go.Bar(
@@ -1091,13 +1028,11 @@ with tab_overview:
         }))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # HISTORY
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab_history:
     st.markdown(section_header("Snapshot History", "◷"), unsafe_allow_html=True)
-
     if history_df.empty:
         st.markdown(
             f"""<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:16px;padding:2.5rem 2rem;box-shadow:{SHADOW};text-align:center;">
@@ -1114,26 +1049,21 @@ with tab_history:
             change_pct = (change / previous["net_worth"] * 100) if previous["net_worth"] != 0 else 0
             change_color = GREEN if change >= 0 else RED
             change_icon = "↗" if change >= 0 else "↘"
-
             h1, h2, h3 = st.columns(3)
             h1.markdown(kpi_html("Latest Net Worth", gbp(latest["net_worth"]), PURPLE, "◈", latest["label"]), unsafe_allow_html=True)
             h2.markdown(kpi_html("Month-on-Month Change", gbp(change), change_color, change_icon), unsafe_allow_html=True)
             h3.markdown(kpi_html("Growth Rate", pct_fmt(change_pct), change_color, change_icon), unsafe_allow_html=True)
-
         spacer(".6rem")
         st.markdown(card_open("Net Worth History", "Stacked assets with total net worth line"), unsafe_allow_html=True)
         view_mode = st.radio("View", ["Monthly", "Yearly"], horizontal=True, label_visibility="collapsed")
-
         if view_mode == "Yearly":
             display_df = history_df.sort_values("date").groupby("year").tail(1).copy()
             display_df["x_label"] = display_df["year"].astype(str)
         else:
             display_df = history_df.copy()
             display_df["x_label"] = display_df["label"]
-
         fig = go.Figure()
         totals = display_df["net_worth"].replace(0, 1)
-
         traces = [
             ("cash", LBL_CASH, CYAN),
             ("investments", LBL_STOCK, BLUE),
@@ -1141,7 +1071,6 @@ with tab_history:
             ("pension", LBL_PENSION, GREEN),
             ("real_estate_equity", LBL_RE, PURPLE),
         ]
-
         for col_name, label, color in traces:
             values = display_df[col_name]
             percentages = (values / totals * 100).fillna(0)
@@ -1160,7 +1089,6 @@ with tab_history:
                 insidetextanchor="middle",
                 hovertemplate=f"<b>{label}</b><br>%{{x}}: £%{{y:,.0f}}<extra></extra>",
             ))
-
         fig.add_trace(go.Scatter(
             x=display_df["x_label"],
             y=display_df["net_worth"],
@@ -1173,7 +1101,6 @@ with tab_history:
             textfont=dict(color=WHITE, size=11, family="Inter"),
             hovertemplate="<b>Total Net Worth</b><br>%{x}: £%{y:,.0f}<extra></extra>",
         ))
-
         fig.update_layout(**make_layout({
             "height": 470,
             "barmode": "stack",
@@ -1190,7 +1117,6 @@ with tab_history:
         }))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
-
         spacer(".5rem")
         st.markdown(card_open("Month-to-Month Growth"), unsafe_allow_html=True)
         table_html = f'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.82rem;"><thead><tr style="border-bottom:2px solid {BORDER};"><th style="text-align:left;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Period</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Net Worth</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Change</th><th style="text-align:right;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Growth</th></tr></thead><tbody>'
@@ -1208,31 +1134,30 @@ with tab_history:
         table_html += "</tbody></table></div>"
         st.markdown(table_html, unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# PORTFOLIO
+# PORTFOLIO (now includes Cash Savings)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab_portfolio:
     st.markdown(section_header("Portfolio Overview", "△"), unsafe_allow_html=True)
-    total_portfolio = investments + crypto + pension_val
-    annual_growth_est = total_portfolio * expected_return / 100
-
-    p1, p2, p3, p4 = st.columns(4)
+    total_portfolio = cash + investments + crypto + pension_val
+    annual_growth_est_cash = cash * cash_interest_rate / 100
+    annual_growth_est_stocks = (investments + crypto + pension_val) * expected_return / 100
+    annual_growth_est = annual_growth_est_cash + annual_growth_est_stocks
+    p1, p2, p3, p4, p5 = st.columns(5)
     p1.markdown(kpi_small("Total Portfolio", gbp(total_portfolio), PURPLE), unsafe_allow_html=True)
-    p2.markdown(kpi_small(LBL_STOCK, gbp(investments), BLUE), unsafe_allow_html=True)
-    p3.markdown(kpi_small(LBL_CRYPTO, gbp(crypto), AMBER), unsafe_allow_html=True)
-    p4.markdown(kpi_small(LBL_PENSION, gbp(pension_val), GREEN), unsafe_allow_html=True)
-
+    p2.markdown(kpi_small(LBL_CASH, gbp(cash), CYAN), unsafe_allow_html=True)
+    p3.markdown(kpi_small(LBL_STOCK, gbp(investments), BLUE), unsafe_allow_html=True)
+    p4.markdown(kpi_small(LBL_CRYPTO, gbp(crypto), AMBER), unsafe_allow_html=True)
+    p5.markdown(kpi_small(LBL_PENSION, gbp(pension_val), GREEN), unsafe_allow_html=True)
     spacer("1rem")
     left, right = st.columns(2)
-
     with left:
         st.markdown(card_open("Portfolio Split"), unsafe_allow_html=True)
         fig = go.Figure(go.Pie(
-            labels=[LBL_STOCK, LBL_CRYPTO, LBL_PENSION],
-            values=[investments, crypto, pension_val],
+            labels=[LBL_CASH, LBL_STOCK, LBL_CRYPTO, LBL_PENSION],
+            values=[cash, investments, crypto, pension_val],
             hole=0.6,
-            marker=dict(colors=[BLUE, AMBER, GREEN], line=dict(color=BG, width=2)),
+            marker=dict(colors=[CYAN, BLUE, AMBER, GREEN], line=dict(color=BG, width=2)),
             textinfo="label+percent+value",
             texttemplate="<b>%{label}</b><br>£%{value:,.0f}<br>%{percent}",
             textfont=BOLD_WHITE_SM,
@@ -1241,32 +1166,32 @@ with tab_portfolio:
         fig.update_layout(**make_layout({"height": 330, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
-
     with right:
         st.markdown(card_open("Portfolio Insights"), unsafe_allow_html=True)
-        risk_ratio = ((investments + crypto) / total_portfolio * 100) if total_portfolio > 0 else 0
-        if risk_ratio < 35:
+        equity_ratio = ((investments + crypto) / total_portfolio * 100) if total_portfolio > 0 else 0
+        cash_ratio = (cash / total_portfolio * 100) if total_portfolio > 0 else 0
+        if equity_ratio < 35:
             risk_label = "Conservative"
             risk_color = CYAN
-        elif risk_ratio < 70:
+        elif equity_ratio < 70:
             risk_label = "Balanced"
             risk_color = GREEN
         else:
             risk_label = "Growth"
             risk_color = PURPLE
-
         st.markdown(row_item("Estimated Annual Growth", gbp(annual_growth_est), CYAN, True), unsafe_allow_html=True)
         st.markdown(row_item("Risk Profile", risk_label, risk_color, True), unsafe_allow_html=True)
-        st.markdown(row_item("Equity Allocation", pct_fmt(risk_ratio), BLUE), unsafe_allow_html=True)
+        st.markdown(row_item("Cash Allocation", pct_fmt(cash_ratio), CYAN), unsafe_allow_html=True)
+        st.markdown(row_item("Cash Interest Rate", pct_fmt(cash_interest_rate), CYAN), unsafe_allow_html=True)
+        st.markdown(row_item("Equity Allocation", pct_fmt(equity_ratio), BLUE), unsafe_allow_html=True)
+        st.markdown(row_item("Stock Expected Return", pct_fmt(expected_return), BLUE), unsafe_allow_html=True)
         st.markdown(row_item("Largest Concentration", f"{largest_asset_label} ({largest_asset_pct:.0f}%)", TEXT), unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # FORECAST
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab_forecast:
     st.markdown(section_header("Wealth Projection", "⟩"), unsafe_allow_html=True)
-
     st.markdown(
         """
         <div class="scenario-wrap">
@@ -1276,36 +1201,30 @@ with tab_forecast:
         """,
         unsafe_allow_html=True,
     )
-
     scenario_choice = st.selectbox(
         "Forecast Scenario",
         ["Conservative", "Base", "Aggressive"],
         index=["Conservative", "Base", "Aggressive"].index(st.session_state.selected_scenario),
         label_visibility="collapsed",
     )
-
     if scenario_choice != st.session_state.selected_scenario:
         st.session_state.selected_scenario = scenario_choice
         st.rerun()
-
     selected_df, selected_return = scenario_map[scenario_choice]
     target_years = years_to_target(selected_df, target_wealth)
-
     st.markdown(
-        f'<div style="background:{AMBER}12;border:1px solid {AMBER}33;border-radius:12px;padding:.7rem .9rem;margin-bottom:.8rem;"><span style="color:{AMBER};font-size:.84rem;font-weight:700;">Nominal forecast:</span> <span style="color:{TEXT2};font-size:.84rem;">This chart shows projected growth in money terms and does not reflect inflation-adjusted affordability.</span></div>',
+        f'<div style="background:{AMBER}12;border:1px solid {AMBER}33;border-radius:12px;padding:.7rem .9rem;margin-bottom:.8rem;"><span style="color:{AMBER};font-size:.84rem;font-weight:700;">Nominal forecast:</span> <span style="color:{TEXT2};font-size:.84rem;">Cash grows at {pct_fmt(cash_interest_rate)}, stocks at {pct_fmt(selected_return)}. Charts show projected growth in money terms, not inflation-adjusted.</span></div>',
         unsafe_allow_html=True,
     )
-
     milestone_years = sorted(set([y for y in [1, 5, 10, years_to_retire] if y <= years_to_retire]))
     milestone_cols = st.columns(len(milestone_years))
-    description = f"Based on {gbp(monthly_invest)}/mo contributions and {selected_return:.1f}% yearly growth"
+    description = f"Cash: {gbp(monthly_invest_cash)}/mo at {pct_fmt(cash_interest_rate)} · Stocks: {gbp(monthly_invest_stocks)}/mo at {pct_fmt(selected_return)}"
     for idx, year in enumerate(milestone_years):
         match = selected_df.loc[selected_df["year"] == year, "net_worth"]
         value = match.values[0] if len(match) > 0 else net_worth
         label = f"Year {year}" if year != years_to_retire else f"Retirement ({year}yr)"
         color = BLUE if scenario_choice == "Base" else (CYAN if scenario_choice == "Conservative" else PURPLE)
         milestone_cols[idx].markdown(kpi_html(label, gbp(value), color, sub=description), unsafe_allow_html=True)
-
     spacer(".8rem")
     st.markdown(card_open("Scenario Analysis", f"Currently showing: {scenario_choice}"), unsafe_allow_html=True)
     fig = go.Figure()
@@ -1350,10 +1269,8 @@ with tab_forecast:
     }))
     st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
     st.markdown(card_close(), unsafe_allow_html=True)
-
     spacer(".5rem")
     left, right = st.columns(2)
-
     with left:
         st.markdown(card_open("Nominal vs Real (Inflation-Adjusted)"), unsafe_allow_html=True)
         fig2 = go.Figure()
@@ -1379,7 +1296,6 @@ with tab_forecast:
         }))
         st.plotly_chart(fig2, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
-
     with right:
         st.markdown(card_open("Target Timing & Guidance"), unsafe_allow_html=True)
         if target_years is not None:
@@ -1389,19 +1305,16 @@ with tab_forecast:
         else:
             st.markdown(row_item("Selected Scenario", scenario_choice, BLUE, True), unsafe_allow_html=True)
             st.markdown(row_item("Years to Target", "Not reached", RED, True), unsafe_allow_html=True)
-
         guidance_gap = max(0, required_monthly - monthly_invest)
         guidance_text = f"Increase monthly investing by about {gbp(guidance_gap)}/mo to improve your path to target." if guidance_gap > 0 else "Your current monthly investment level is already aligned with this scenario."
         st.markdown(f'<div style="margin-top:.8rem;padding:.7rem .9rem;background:{PURPLE}10;border:1px solid {PURPLE}22;border-radius:10px;color:{TEXT2};font-size:.82rem;line-height:1.55;">{guidance_text}</div>', unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # GOALS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab_goals:
     st.markdown(section_header("Goal Tracking", "◎"), unsafe_allow_html=True)
     left, right = st.columns(2)
-
     with left:
         st.markdown(card_open("Wealth Target Progress"), unsafe_allow_html=True)
         st.markdown(
@@ -1415,7 +1328,6 @@ with tab_goals:
             unsafe_allow_html=True,
         )
         st.markdown(card_close(), unsafe_allow_html=True)
-
     with right:
         st.markdown(card_open("Gap Analysis"), unsafe_allow_html=True)
         total_saving_now = monthly_invest + monthly_pension_contrib
@@ -1426,18 +1338,15 @@ with tab_goals:
             ("Current Monthly Investing", f"{gbp(total_saving_now)}/mo", GREEN, False),
         ]:
             st.markdown(row_item(label, value, color, bold), unsafe_allow_html=True)
-
         on_track = total_saving_now >= required_monthly
         status_color = GREEN if on_track else AMBER
         status_text = "On Track" if on_track else "Below Target"
         status_icon = "✓" if on_track else "!"
-
         st.markdown(
             f'<div style="margin-top:.8rem;padding:.6rem .8rem;background:{status_color}15;border:1px solid {status_color}33;border-radius:10px;display:flex;align-items:center;gap:.5rem;"><span style="background:{status_color};color:{BG};font-weight:800;font-size:.75rem;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;">{status_icon}</span><span style="color:{status_color};font-weight:600;font-size:.85rem;">{status_text}</span></div>',
             unsafe_allow_html=True,
         )
         st.markdown(card_close(), unsafe_allow_html=True)
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ASSUMPTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1445,48 +1354,44 @@ with tab_assumptions:
     region = "Scotland" if scotland_tax else "England / Wales / NI"
     st.markdown(section_header("Model Assumptions", "⚙"), unsafe_allow_html=True)
     st.markdown(card_open("Parameters"), unsafe_allow_html=True)
-
     for label, value, desc, color in [
-        ("Expected Investment Return", pct_fmt(expected_return), "Annual nominal return used for stock, crypto, and pension growth", BLUE),
-        ("Inflation Rate", pct_fmt(inflation), "Used to calculate real purchasing-power values", CYAN),
+        ("Cash Interest Rate", pct_fmt(cash_interest_rate), "Annual interest rate applied to cash savings growth", CYAN),
+        ("Stock & Shares Expected Return", pct_fmt(expected_return), "Annual nominal return used for stock, crypto, and pension growth", BLUE),
+        ("Inflation Rate", pct_fmt(inflation), "Used to calculate real purchasing-power values", AMBER),
         ("Yearly Real Estate Growth %", pct_fmt(property_growth), "Annual growth assumption for real estate equity", PURPLE),
         ("Employer Pension Match", "3.0%", "Assumed employer pension contribution rate", GREEN),
         ("Tax Region", region, "Selected tax jurisdiction", AMBER),
-        ("Scenario Spread", "±2.0%", "Conservative and aggressive scenarios are built around the base return", TEXT),
+        ("Scenario Spread", "±2.0%", "Conservative and aggressive scenarios adjust the stock return ±2% around the base", TEXT),
+        ("Monthly Cash Saving", gbp(monthly_invest_cash), "Amount added to cash savings each month", CYAN),
+        ("Monthly Stock Investment", gbp(monthly_invest_stocks), "Amount invested in stocks and shares each month", BLUE),
     ]:
         st.markdown(
             f'<div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid {BORDER};"><div><div style="color:{TEXT};font-size:.88rem;font-weight:500;">{label}</div><div style="color:{TEXT3};font-size:.72rem;margin-top:.1rem;">{desc}</div></div><span style="color:{color};font-weight:700;font-size:.95rem;white-space:nowrap;margin-left:1rem;">{value}</span></div>',
             unsafe_allow_html=True,
         )
-
     st.markdown(card_close(), unsafe_allow_html=True)
     spacer(".5rem")
     st.markdown(
         f'<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:16px;padding:1.3rem 1.5rem;box-shadow:{SHADOW_SM};"><div style="color:{TEXT};font-size:.95rem;font-weight:600;margin-bottom:.5rem;">Disclaimer</div><div style="color:{TEXT3};font-size:.78rem;line-height:1.65;">This dashboard is for illustrative and educational purposes only. It does not constitute financial advice. Forecasts use simplified compound-growth models. Unallocated surplus cash is not included in projections unless explicitly represented in your saved asset values.</div></div>',
         unsafe_allow_html=True,
     )
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CASH FLOW
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab_cashflow:
     st.markdown(section_header("Monthly Cash Flow", "↔"), unsafe_allow_html=True)
-
     cashflow_expenses = money_text_input("Monthly Expenses (£)", st.session_state.monthly_expenses, "monthly_expenses_cashflow")
     if cashflow_expenses != st.session_state.monthly_expenses:
         st.session_state.monthly_expenses = cashflow_expenses
         monthly_expenses = cashflow_expenses
         surplus = net_monthly - monthly_expenses - monthly_invest
         savings_rate = (monthly_invest / net_monthly * 100) if net_monthly > 0 else 0
-
     c1, c2, c3 = st.columns(3)
     c1.markdown(kpi_small("Net Income", gbp(net_monthly), GREEN), unsafe_allow_html=True)
     c2.markdown(kpi_small("Total Outflows", gbp(monthly_expenses + monthly_invest + monthly_pension_contrib), AMBER), unsafe_allow_html=True)
     c3.markdown(kpi_small("Investment Rate", pct_fmt(savings_rate), PURPLE), unsafe_allow_html=True)
-
     spacer(".8rem")
     left, right = st.columns(2)
-
     with left:
         st.markdown(card_open("Cash Flow Statement"), unsafe_allow_html=True)
         for label, value, color, bold in [
@@ -1496,25 +1401,22 @@ with tab_cashflow:
             ("Net Monthly Income", net_monthly, GREEN, True),
         ]:
             st.markdown(row_item(label, gbp(value), color, bold), unsafe_allow_html=True)
-
         st.markdown(f'<div style="height:.25rem;border-bottom:1px dashed {BORDER};margin:.15rem 0;"></div>', unsafe_allow_html=True)
-
         for label, value, color, bold in [
             ("Expenses", -monthly_expenses, RED, False),
-            ("Monthly Investment", -monthly_invest, BLUE, False),
+            ("Monthly Cash Saving", -monthly_invest_cash, CYAN, False),
+            ("Monthly Stock Investment", -monthly_invest_stocks, BLUE, False),
             ("Monthly Surplus", surplus, CYAN if surplus >= 0 else RED, True),
         ]:
             st.markdown(row_item(label, gbp(value), color, bold), unsafe_allow_html=True)
-
         st.markdown(card_close(), unsafe_allow_html=True)
-
     with right:
         st.markdown(card_open("Monthly Outflow Split"), unsafe_allow_html=True)
         fig = go.Figure(go.Pie(
-            labels=["Expenses", "Monthly Investment", "Pension", "Surplus"],
-            values=[monthly_expenses, monthly_invest, monthly_pension_contrib, max(0, surplus)],
+            labels=["Expenses", "Cash Saving", "Stock Investment", "Pension", "Surplus"],
+            values=[monthly_expenses, monthly_invest_cash, monthly_invest_stocks, monthly_pension_contrib, max(0, surplus)],
             hole=0.58,
-            marker=dict(colors=[RED, BLUE, GREEN, CYAN], line=dict(color=BG, width=2)),
+            marker=dict(colors=[RED, CYAN, BLUE, GREEN, "#475569"], line=dict(color=BG, width=2)),
             textinfo="label+percent+value",
             texttemplate="<b>%{label}</b><br>£%{value:,.0f}",
             textfont=BOLD_WHITE_SM,
@@ -1523,7 +1425,6 @@ with tab_cashflow:
         fig.update_layout(**make_layout({"height": 350, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # SALARY CALCULATOR
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1535,16 +1436,13 @@ with tab_salary:
         unsafe_allow_html=True,
     )
     st.markdown(f'<div style="color:{TEXT3};font-size:.8rem;margin-bottom:1rem;">A standalone take-home pay tool based on your current employment package assumptions.</div>', unsafe_allow_html=True)
-
     s1, s2, s3, s4 = st.columns(4)
     s1.markdown(kpi_html("Gross Income", gbp(total_gross), TEXT), unsafe_allow_html=True)
     s2.markdown(kpi_html("Take Home (Annual)", gbp(tax["net_annual"]), GREEN), unsafe_allow_html=True)
     s3.markdown(kpi_html("Take Home (Monthly)", gbp(tax["net_monthly"]), GREEN), unsafe_allow_html=True)
     s4.markdown(kpi_html("Effective Tax Rate", pct_fmt(tax["effective_rate"]), PURPLE), unsafe_allow_html=True)
-
     spacer("1rem")
     left, right = st.columns([1.15, 0.85])
-
     with left:
         st.markdown(card_open("Income Statement"), unsafe_allow_html=True)
         for label, value, color, bold in [
@@ -1560,7 +1458,6 @@ with tab_salary:
         ]:
             st.markdown(row_item(label, gbp(value), color, bold), unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
-
     with right:
         st.markdown(card_open("Tax Composition"), unsafe_allow_html=True)
         fig = go.Figure(go.Pie(
@@ -1576,7 +1473,6 @@ with tab_salary:
         fig.update_layout(**make_layout({"height": 280, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
-
         st.markdown(card_open("Tax Band Detail"), unsafe_allow_html=True)
         if tax["band_breakdown"]:
             for band in tax["band_breakdown"]:
@@ -1587,7 +1483,6 @@ with tab_salary:
         else:
             st.markdown(f'<span style="color:{TEXT3};font-size:.82rem;">No tax bands applicable</span>', unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # FOOTER
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
