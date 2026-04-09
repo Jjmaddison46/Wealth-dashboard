@@ -98,6 +98,7 @@ DEFAULT_SETTINGS = {
     "inflation": 2.5,
     "property_growth": 3.5,
     "selected_scenario": "Base",
+    "bonus_month": "March",
     "rental_income": 0,
     "dividends_income": 0,
     "side_income": 0,
@@ -112,6 +113,8 @@ if "custom_goals" not in st.session_state:
     st.session_state.custom_goals = [
         {"name": "Financial Freedom", "target": 2_000_000, "target_age": 50},
     ]
+if "target_alloc" not in st.session_state:
+    st.session_state.target_alloc = {"cash": 15, "stocks": 45, "crypto": 5, "pension": 25, "real_estate": 10}
 for key, value in DEFAULT_SETTINGS.items():
     if key not in st.session_state:
         st.session_state[key] = value
@@ -185,11 +188,43 @@ section[data-testid="stSidebar"] [data-baseweb="select"] > div {{
     background: #F8FAFC !important;
     color: {BLACK} !important;
     border-radius: 10px !important;
+    border: 1px solid {BORDER_L} !important;
 }}
 section[data-testid="stSidebar"] [data-baseweb="select"] span,
 section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
     color: {BLACK} !important;
     fill: {BLACK} !important;
+}}
+/* Fix selectbox underline artifacts */
+section[data-testid="stSidebar"] [data-baseweb="select"] [role="combobox"],
+section[data-testid="stSidebar"] [data-baseweb="select"] input {{
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    caret-color: transparent !important;
+}}
+section[data-testid="stSidebar"] [data-baseweb="select"] > div::after,
+section[data-testid="stSidebar"] [data-baseweb="select"] > div::before {{
+    display: none !important;
+}}
+/* Also fix main content selectboxes */
+[data-baseweb="select"] > div {{
+    background: {CARD} !important;
+    color: {TEXT} !important;
+    border: 1px solid {BORDER_L} !important;
+    border-radius: 10px !important;
+}}
+[data-baseweb="select"] span {{
+    color: {TEXT} !important;
+}}
+[data-baseweb="select"] svg {{
+    fill: {TEXT2} !important;
+}}
+[data-baseweb="select"] [role="combobox"],
+[data-baseweb="select"] input {{
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }}
 
 /* ── SLIDER STYLING — deep yellow/orange active track ── */
@@ -253,17 +288,22 @@ section[data-testid="stSidebar"] .stSlider [data-testid="stWidgetLabel"] * {{
 }}
 
 section[data-testid="stSidebar"] .stButton > button {{
-    background: {WHITE} !important;
-    color: {BLACK} !important;
-    border: 1px solid {WHITE} !important;
+    background: linear-gradient(135deg, {PURPLE} 0%, {BLUE} 100%) !important;
+    color: {WHITE} !important;
+    border: none !important;
     border-radius: 12px !important;
     font-weight: 800 !important;
-    box-shadow: none !important;
+    font-size: .88rem !important;
+    letter-spacing: .02em !important;
+    padding: .65rem 1rem !important;
+    box-shadow: 0 2px 8px rgba(139,92,246,.3) !important;
+    transition: all .2s ease !important;
 }}
 section[data-testid="stSidebar"] .stButton > button:hover {{
-    background: #F3F4F6 !important;
-    color: {BLACK} !important;
-    border: 1px solid #F3F4F6 !important;
+    background: linear-gradient(135deg, #9D6FFF 0%, #5B9BFF 100%) !important;
+    color: {WHITE} !important;
+    box-shadow: 0 4px 16px rgba(139,92,246,.4) !important;
+    transform: translateY(-1px) !important;
 }}
 div[data-testid="stMetric"] {{
     display: none;
@@ -320,28 +360,64 @@ div[data-testid="stMetric"] {{
 div[data-testid="column"] > div {{
     padding: 0 .3rem;
 }}
+/* Force equal-height KPI cards across columns */
+div[data-testid="stHorizontalBlock"] {{
+    align-items: stretch;
+}}
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {{
+    display: flex;
+    flex-direction: column;
+}}
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"] > div > div > div > div {{
+    flex: 1;
+}}
 .wealthview-header {{
     display:flex;
-    align-items:baseline;
-    gap:.8rem;
+    align-items:center;
+    gap:.75rem;
     margin: .4rem 0 .35rem 0;
     padding-top: .25rem;
     overflow: visible;
 }}
+.wv-logo {{
+    display:inline-flex;
+    align-items:center;
+    gap:.55rem;
+}}
+.wv-logo-icon {{
+    width:34px;
+    height:34px;
+    border-radius:9px;
+    background:linear-gradient(135deg,{PURPLE},{BLUE});
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 2px 10px rgba(139,92,246,.25);
+    flex-shrink:0;
+}}
+.wv-logo-icon svg {{
+    width:18px;
+    height:18px;
+}}
 .wealthview-title {{
-    font-size:1.95rem;
-    font-weight:900;
-    letter-spacing:-.03em;
-    background:linear-gradient(135deg,{PURPLE},{BLUE},{CYAN});
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
+    font-size:1.55rem;
+    font-weight:800;
+    letter-spacing:-.04em;
+    color:{TEXT};
     line-height:1.2;
     display:inline-block;
 }}
+.wealthview-title span {{
+    background:linear-gradient(135deg,{PURPLE},{CYAN});
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}}
 .wealthview-subtitle {{
     color:{TEXT3};
-    font-size:.78rem;
-    letter-spacing:.04em;
+    font-size:.72rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin-left:.2rem;
 }}
 .scenario-wrap {{
     background: linear-gradient(135deg, {CARD} 0%, {CARD_H} 100%);
@@ -438,7 +514,8 @@ def kpi_html(label, value, color=PURPLE, icon="", sub="", info=""):
     return (
         f'<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);'
         f'border:1px solid {BORDER};border-radius:14px;padding:1.05rem 1.2rem;'
-        f'box-shadow:{SHADOW_SM};position:relative;overflow:hidden;min-height:156px;">'
+        f'box-shadow:{SHADOW_SM};position:relative;overflow:hidden;min-height:130px;'
+        f'display:flex;flex-direction:column;justify-content:flex-start;height:100%;">'
         f'<div style="position:absolute;top:0;left:0;right:0;height:2px;'
         f'background:linear-gradient(90deg,{color}88,transparent);"></div>'
         f'<div style="color:{TEXT2};font-size:.7rem;text-transform:uppercase;'
@@ -671,8 +748,14 @@ with st.sidebar:
     st.markdown(
         f"""
         <div style="text-align:center;padding:1rem 0 .6rem 0;">
-            <div style="font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,{PURPLE},{BLUE},{CYAN});-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.03em;">◈ WealthView</div>
-            <div style="color:{TEXT3};font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.2rem;">Personal Finance Dashboard</div>
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,{PURPLE},{BLUE});box-shadow:0 2px 10px rgba(139,92,246,.25);margin-bottom:.45rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 17L9 11L13 15L21 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M17 7H21V11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div style="font-size:1.4rem;font-weight:800;letter-spacing:-.04em;"><span style="background:linear-gradient(135deg,{PURPLE},{CYAN});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Wealth</span><span style="color:{TEXT};">View</span></div>
+            <div style="color:{TEXT3};font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.2rem;">Wealth Management</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -767,6 +850,10 @@ with st.sidebar:
         )
         draft_gross_salary = money_text_input("Gross Salary (£/yr)", st.session_state.gross_salary, "gross_salary_input")
         draft_annual_bonus = money_text_input("Annual Bonus (£)", st.session_state.annual_bonus, "annual_bonus_input")
+        draft_bonus_month = st.selectbox("Bonus Paid In", MONTHS,
+                                          index=MONTHS.index(st.session_state.bonus_month),
+                                          key="bonus_month_input",
+                                          help="Month your annual bonus is paid — affects cash flow for that month only")
         draft_rental_income = money_text_input("Rental Income (£/yr)", st.session_state.rental_income, "rental_income_input",
                                                 help_text="Annual rental income from buy-to-let or other properties")
         draft_dividends_income = money_text_input("Dividends (£/yr)", st.session_state.dividends_income, "dividends_income_input",
@@ -807,6 +894,7 @@ with st.sidebar:
     if forecast_submit:
         st.session_state.gross_salary = draft_gross_salary
         st.session_state.annual_bonus = draft_annual_bonus
+        st.session_state.bonus_month = draft_bonus_month
         st.session_state.rental_income = draft_rental_income
         st.session_state.dividends_income = draft_dividends_income
         st.session_state.side_income = draft_side_income
@@ -846,15 +934,27 @@ expected_return = st.session_state.expected_return
 inflation = st.session_state.inflation
 property_growth = st.session_state.property_growth
 selected_scenario = st.session_state.selected_scenario
+bonus_month = st.session_state.bonus_month
 total_gross = gross_salary + annual_bonus + additional_income
 employee_pension_annual = gross_salary * pension_contrib_pct / 100
 employer_pension_annual = gross_salary * 0.03
 taxable_gross = total_gross - employee_pension_annual
 tax = calc_uk_tax(taxable_gross, scotland=scotland_tax)
+# Base monthly income excludes bonus — bonus hits only in its month
+base_monthly_gross = (gross_salary + additional_income) / 12
+base_employee_pension_monthly = employee_pension_annual / 12
+base_taxable_gross = gross_salary + additional_income - employee_pension_annual
+base_tax = calc_uk_tax(base_taxable_gross, scotland=scotland_tax)
+net_monthly_ex_bonus = base_tax["net_monthly"]
+# Bonus month gets the full net (including bonus)
 net_monthly = tax["net_monthly"]
+is_bonus_month = (selected_month == bonus_month)
+effective_net_monthly = net_monthly if is_bonus_month and annual_bonus > 0 else net_monthly_ex_bonus if annual_bonus > 0 else net_monthly
 monthly_pension_contrib = employee_pension_annual / 12
-surplus = net_monthly - monthly_expenses - monthly_invest
-savings_rate = (monthly_invest / net_monthly * 100) if net_monthly > 0 else 0
+# Use base monthly (excl bonus) for regular cash flow
+cashflow_net = net_monthly_ex_bonus if annual_bonus > 0 else net_monthly
+surplus = cashflow_net - monthly_expenses - monthly_invest
+savings_rate = (monthly_invest / cashflow_net * 100) if cashflow_net > 0 else 0
 net_worth = cash + investments + crypto + pension_val + real_estate_equity
 years_to_retire = max(1, retirement_age - current_age)
 df_con = forecast_wealth(
@@ -945,60 +1045,98 @@ else:
     momentum_label = "Building history"
     momentum_color = TEXT2
 latest_saved_period = history_df.iloc[-1]["label"] if not history_df.empty else "No saved history yet"
+# Calculate savings streak (consecutive months of net worth growth)
+savings_streak = 0
+if not history_df.empty and len(history_df) >= 2:
+    for i in range(len(history_df) - 1, 0, -1):
+        chg = history_df.iloc[i].get("nw_change", 0)
+        if pd.notna(chg) and chg > 0:
+            savings_streak += 1
+        else:
+            break
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # HEADER
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 st.markdown(
     f"""
     <div class="wealthview-header">
-        <span class="wealthview-title">◈ WealthView</span>
-        <span class="wealthview-subtitle">Personal Wealth Management & Forecast</span>
+        <div class="wv-logo">
+            <div class="wv-logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 17L9 11L13 15L21 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M17 7H21V11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div>
+                <div class="wealthview-title"><span>Wealth</span>View</div>
+            </div>
+        </div>
+        <span class="wealthview-subtitle">Wealth Management</span>
     </div>
     """,
     unsafe_allow_html=True,
 )
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# SNAPSHOT AUTO-REMINDER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+if st.session_state.snapshots:
+    last_snap_key = sorted(st.session_state.snapshots.keys())[-1]
+    try:
+        ls_year, ls_month = last_snap_key.split("-")
+        last_snap_date = datetime(int(ls_year), int(ls_month), 1)
+        days_since = (datetime.now() - last_snap_date).days
+        if days_since > 35:
+            last_snap_label = f"{MONTHS[int(ls_month)-1]} {ls_year}"
+            st.markdown(
+                f'<div style="background:linear-gradient(135deg,{AMBER}12 0%,{AMBER}06 100%);'
+                f'border:1px solid {AMBER}44;border-radius:12px;padding:.7rem 1rem;margin-bottom:.6rem;'
+                f'display:flex;align-items:center;gap:.7rem;">'
+                f'<span style="font-size:1.2rem;">📅</span>'
+                f'<div><span style="color:{AMBER};font-size:.85rem;font-weight:700;">Time for an update!</span>'
+                f'<span style="color:{TEXT2};font-size:.82rem;"> Your last snapshot was for '
+                f'<b style="color:{WHITE}">{last_snap_label}</b> ({days_since} days ago). '
+                f'Head to the sidebar to save this month\'s data.</span></div></div>',
+                unsafe_allow_html=True,
+            )
+    except (ValueError, IndexError):
+        pass
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # GETTING STARTED (rewritten for clarity)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.expander("Getting Started — How to Use This Dashboard", expanded=False):
+    gs_step = (
+        '<div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;'
+        f'border-bottom:1px solid {BORDER};">'
+        '<div style="min-width:32px;height:32px;border-radius:8px;'
+        'background:{bg};border:1px solid {bd};display:flex;align-items:center;'
+        'justify-content:center;font-weight:800;font-size:.85rem;color:{c};flex-shrink:0;">{n}</div>'
+        '<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">{title}</div>'
+        '<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;">{desc}</div></div></div>'
+    )
     st.markdown(
         f"""
 <div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:14px;padding:1.2rem 1.4rem;">
-<div style="color:{TEXT};font-size:.95rem;font-weight:600;margin-bottom:.3rem;">Quick Start Guide</div>
-<div style="color:{TEXT2};font-size:.82rem;margin-bottom:.8rem;">The sidebar has <b style="color:{WHITE}">two separate input sections</b> that serve different purposes. Make sure you use both.</div>
+<div style="color:{TEXT};font-size:.95rem;font-weight:600;margin-bottom:.6rem;">Quick Start Guide</div>
 
-<div style="background:{PURPLE}12;border:1px solid {PURPLE}33;border-radius:12px;padding:.85rem 1rem;margin-bottom:.7rem;">
-<div style="color:{PURPLE};font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;">Section 1 — Monthly Snapshot Inputs</div>
-<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;">
-These capture the <b style="color:{WHITE}">current value of each asset</b> for a specific month and year. Update these each month to build your wealth history over time.
-</div>
-<div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.5rem;">
-<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Cash Savings</span>
-<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Stock and Shares</span>
-<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Crypto</span>
-<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Pension</span>
-<span style="background:{CARD};border:1px solid {BORDER};border-radius:6px;padding:.2rem .55rem;color:{TEXT2};font-size:.72rem;">Real Estate Equity</span>
-</div>
-<div style="color:{TEXT3};font-size:.74rem;margin-top:.45rem;">Click <b style="color:{WHITE};">Save Monthly Input</b> after entering your values. You can go back and edit any previous month.</div>
-</div>
+<div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;border-bottom:1px solid {BORDER};">
+<div style="min-width:32px;height:32px;border-radius:8px;background:{PURPLE}22;border:1px solid {PURPLE}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{PURPLE};flex-shrink:0;">1</div>
+<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Save Monthly Snapshots</div>
+<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;">Use the <b style="color:{WHITE}">first sidebar section</b> to enter the current value of each asset (Cash, Stocks, Crypto, Pension, Real Estate) for a specific month. Click <b style="color:{WHITE}">Save Monthly Input</b> to record it.</div></div></div>
 
-<div style="background:{CYAN}12;border:1px solid {CYAN}33;border-radius:12px;padding:.85rem 1rem;margin-bottom:.7rem;">
-<div style="color:{CYAN};font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;">Section 2 — Employment, Contributions & Forecast Assumptions</div>
-<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;">
-These settings drive your <b style="color:{WHITE}">salary calculator, cash flow analysis, and wealth forecasts</b>. They are completely separate from the monthly snapshot inputs and do not need updating each month — only when your circumstances change.
-</div>
-<div style="color:{TEXT3};font-size:.74rem;margin-top:.45rem;">This section includes your salary, investment contributions (split into <b style="color:{WHITE};">cash savings</b> and <b style="color:{WHITE};">stock investments</b> with separate growth rates), pension contribution %, age, target wealth, and return assumptions. Click <b style="color:{WHITE};">Update Forecast Assumptions</b> to apply changes.</div>
-</div>
+<div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;border-bottom:1px solid {BORDER};">
+<div style="min-width:32px;height:32px;border-radius:8px;background:{CYAN}22;border:1px solid {CYAN}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{CYAN};flex-shrink:0;">2</div>
+<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Set Your Assumptions</div>
+<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;">The <b style="color:{WHITE}">second sidebar section</b> controls salary, investment contributions, growth rates, and goals. These drive forecasts and cash flow — update them only when your circumstances change.</div></div></div>
 
-<div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-top:1px solid {BORDER};">
-<div style="min-width:32px;height:32px;border-radius:8px;background:{GREEN}22;border:1px solid {GREEN}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{GREEN};">3</div>
-<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Explore the Dashboard Tabs</div>
-<div style="color:{TEXT2};font-size:.8rem;"><b>Overview</b> and <b>History</b> show your wealth progress. <b>Portfolio</b> shows your investment allocation including cash. <b>Forecast</b> and <b>Goals</b> support long-term planning. <b>Cash Flow</b> and <b>Salary Calculator</b> help with monthly budgeting.</div></div></div>
+<div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;border-bottom:1px solid {BORDER};">
+<div style="min-width:32px;height:32px;border-radius:8px;background:{GREEN}22;border:1px solid {GREEN}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{GREEN};flex-shrink:0;">3</div>
+<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Explore the Tabs</div>
+<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;"><b style="color:{WHITE}">Overview</b> and <b style="color:{WHITE}">History</b> track your progress. <b style="color:{WHITE}">Portfolio</b> shows allocation. <b style="color:{WHITE}">Forecast</b> and <b style="color:{WHITE}">Goals</b> help plan ahead. <b style="color:{WHITE}">Cash Flow</b> and <b style="color:{WHITE}">Salary Calculator</b> handle monthly budgeting.</div></div></div>
 
-<div style="display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;">
-<div style="min-width:32px;height:32px;border-radius:8px;background:{AMBER}22;border:1px solid {AMBER}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{AMBER};">4</div>
-<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Key Tip</div>
-<div style="color:{TEXT2};font-size:.8rem;">Save monthly snapshots regularly to build a rich history of your wealth trajectory. Update employment and forecast settings only when your income, contributions, or goals change.</div></div></div>
+<div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;">
+<div style="min-width:32px;height:32px;border-radius:8px;background:{AMBER}22;border:1px solid {AMBER}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{AMBER};flex-shrink:0;">4</div>
+<div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Stay Consistent</div>
+<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;">Save snapshots regularly each month to build a rich wealth history. The more data you record, the more powerful your insights and forecasts become.</div></div></div>
 </div>
 """,
         unsafe_allow_html=True,
@@ -1028,11 +1166,14 @@ with tab_overview:
             f'Your net worth has crossed the {ms_label} mark. Keep building!</div></div></div>',
             unsafe_allow_html=True,
         )
-    badge_a, badge_b, badge_c, badge_d = st.columns(4)
-    badge_a.markdown(kpi_small("Current Reporting Period", period_label, PURPLE), unsafe_allow_html=True)
-    badge_b.markdown(kpi_small("Latest Saved Period", latest_saved_period, TEXT), unsafe_allow_html=True)
+    badge_a, badge_b, badge_c, badge_d, badge_e = st.columns(5)
+    badge_a.markdown(kpi_small("Reporting Period", period_label, PURPLE), unsafe_allow_html=True)
+    badge_b.markdown(kpi_small("Latest Saved", latest_saved_period, TEXT), unsafe_allow_html=True)
     badge_c.markdown(kpi_small("Momentum", momentum_label, momentum_color), unsafe_allow_html=True)
-    badge_d.markdown(kpi_small("Saved Snapshots", str(len(st.session_state.snapshots)), CYAN), unsafe_allow_html=True)
+    streak_color = GREEN if savings_streak >= 3 else AMBER if savings_streak >= 1 else TEXT3
+    streak_text = f"{savings_streak} month{'s' if savings_streak != 1 else ''}" if savings_streak > 0 else "—"
+    badge_d.markdown(kpi_small("Growth Streak 🔥", streak_text, streak_color), unsafe_allow_html=True)
+    badge_e.markdown(kpi_small("Snapshots", str(len(st.session_state.snapshots)), CYAN), unsafe_allow_html=True)
     st.markdown(section_header("Financial Net Worth Snapshot", "◈"), unsafe_allow_html=True)
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
@@ -1221,7 +1362,7 @@ with tab_history:
             values = display_df[col_name]
             percentages = (values / totals * 100).fillna(0)
             texts = [
-                f"{gbp(v)}<br>{p:.0f}%" if v > 0 and p >= 8 else ""
+                f"{gbp(v)}<br>{p:.0f}%" if v > 0 and p >= 3 else ""
                 for v, p in zip(values, percentages)
             ]
             fig.add_trace(go.Bar(
@@ -1425,6 +1566,76 @@ with tab_portfolio:
         st.markdown(row_item("Equity Allocation", pct_fmt(equity_ratio), BLUE), unsafe_allow_html=True)
         st.markdown(row_item("Stock Expected Return", pct_fmt(expected_return), BLUE), unsafe_allow_html=True)
         st.markdown(row_item("Largest Concentration", f"{largest_asset_label} ({largest_asset_pct:.0f}%)", TEXT), unsafe_allow_html=True)
+        st.markdown(card_close(), unsafe_allow_html=True)
+    # ── Asset Rebalancing Guide ──
+    spacer("1rem")
+    st.markdown(section_header("Rebalancing Guide", "⚖"), unsafe_allow_html=True)
+    with st.expander("Set Your Target Allocation", expanded=False):
+        st.markdown(
+            f'<div style="color:{TEXT2};font-size:.8rem;margin-bottom:.5rem;line-height:1.5;">'
+            f'Define your ideal portfolio split. The guide below will show how your current allocation '
+            f'compares and suggest adjustments. Percentages should total 100%.</div>',
+            unsafe_allow_html=True,
+        )
+        ta = st.session_state.target_alloc
+        ta_c1, ta_c2, ta_c3, ta_c4, ta_c5 = st.columns(5)
+        with ta_c1:
+            t_cash = st.number_input("Cash %", 0, 100, int(ta["cash"]), key="ta_cash")
+        with ta_c2:
+            t_stocks = st.number_input("Stocks %", 0, 100, int(ta["stocks"]), key="ta_stocks")
+        with ta_c3:
+            t_crypto = st.number_input("Crypto %", 0, 100, int(ta["crypto"]), key="ta_crypto")
+        with ta_c4:
+            t_pension = st.number_input("Pension %", 0, 100, int(ta["pension"]), key="ta_pension")
+        with ta_c5:
+            t_re = st.number_input("Property %", 0, 100, int(ta["real_estate"]), key="ta_re")
+        ta_total = t_cash + t_stocks + t_crypto + t_pension + t_re
+        if ta_total != 100:
+            st.markdown(
+                f'<div style="color:{RED};font-size:.82rem;font-weight:600;">Total: {ta_total}% — must equal 100%</div>',
+                unsafe_allow_html=True,
+            )
+        if st.button("Save Target Allocation", key="save_ta"):
+            st.session_state.target_alloc = {"cash": t_cash, "stocks": t_stocks, "crypto": t_crypto, "pension": t_pension, "real_estate": t_re}
+            st.rerun()
+    if total_portfolio > 0:
+        ta = st.session_state.target_alloc
+        alloc_data = [
+            (LBL_CASH, cash, ta["cash"], CYAN),
+            (LBL_STOCK, investments, ta["stocks"], BLUE),
+            (LBL_CRYPTO, crypto, ta["crypto"], AMBER),
+            (LBL_PENSION, pension_val, ta["pension"], GREEN),
+            (LBL_RE, real_estate_equity, ta["real_estate"], PURPLE),
+        ]
+        total_all = cash + investments + crypto + pension_val + real_estate_equity
+        st.markdown(card_open("Actual vs Target Allocation"), unsafe_allow_html=True)
+        for a_label, a_val, a_target_pct, a_color in alloc_data:
+            actual_pct = (a_val / total_all * 100) if total_all > 0 else 0
+            diff_pct = actual_pct - a_target_pct
+            diff_val = total_all * diff_pct / 100
+            if abs(diff_pct) < 2:
+                status = "On target"
+                s_color = GREEN
+            elif diff_pct > 0:
+                status = f"Overweight by {abs(diff_pct):.1f}%"
+                s_color = AMBER
+            else:
+                status = f"Underweight by {abs(diff_pct):.1f}%"
+                s_color = RED
+            action = ""
+            if abs(diff_pct) >= 2:
+                verb = "Reduce" if diff_pct > 0 else "Increase"
+                action = f" — {verb} by ~{gbp(abs(diff_val))}"
+            st.markdown(
+                f'<div style="display:flex;align-items:center;padding:.55rem 0;border-bottom:1px solid {BORDER};gap:.8rem;">'
+                f'<div style="width:8px;height:8px;border-radius:50%;background:{a_color};flex-shrink:0;"></div>'
+                f'<div style="flex:1;"><span style="color:{TEXT};font-size:.85rem;font-weight:600;">{a_label}</span></div>'
+                f'<div style="text-align:right;min-width:60px;"><span style="color:{TEXT2};font-size:.82rem;">{actual_pct:.1f}%</span>'
+                f'<span style="color:{TEXT3};font-size:.75rem;"> / {a_target_pct}%</span></div>'
+                f'<div style="min-width:180px;text-align:right;"><span style="color:{s_color};font-size:.8rem;font-weight:600;">{status}</span>'
+                f'<span style="color:{TEXT3};font-size:.75rem;">{action}</span></div></div>',
+                unsafe_allow_html=True,
+            )
         st.markdown(card_close(), unsafe_allow_html=True)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # FORECAST
@@ -1780,22 +1991,35 @@ with tab_cashflow:
     if cashflow_expenses != st.session_state.monthly_expenses:
         st.session_state.monthly_expenses = cashflow_expenses
         monthly_expenses = cashflow_expenses
-        surplus = net_monthly - monthly_expenses - monthly_invest
-        savings_rate = (monthly_invest / net_monthly * 100) if net_monthly > 0 else 0
+        surplus = cashflow_net - monthly_expenses - monthly_invest
+        savings_rate = (monthly_invest / cashflow_net * 100) if cashflow_net > 0 else 0
+    if annual_bonus > 0:
+        st.markdown(
+            f'<div style="background:{AMBER}12;border:1px solid {AMBER}33;border-radius:10px;padding:.6rem .85rem;margin-bottom:.7rem;">'
+            f'<span style="color:{AMBER};font-size:.82rem;font-weight:700;">Bonus of {gbp(annual_bonus)}</span>'
+            f'<span style="color:{TEXT2};font-size:.82rem;"> is paid in <b style="color:{WHITE}">{bonus_month}</b> only. '
+            f'The cash flow below shows your regular monthly income (excluding bonus).</span></div>',
+            unsafe_allow_html=True,
+        )
     c1, c2, c3 = st.columns(3)
-    c1.markdown(kpi_small("Net Income", gbp(net_monthly), GREEN), unsafe_allow_html=True)
+    c1.markdown(kpi_small("Net Monthly Income", gbp(cashflow_net), GREEN), unsafe_allow_html=True)
     c2.markdown(kpi_small("Total Outflows", gbp(monthly_expenses + monthly_invest + monthly_pension_contrib), AMBER), unsafe_allow_html=True)
     c3.markdown(kpi_small("Investment Rate", pct_fmt(savings_rate), PURPLE), unsafe_allow_html=True)
     spacer(".8rem")
     left, right = st.columns(2)
     with left:
-        st.markdown(card_open("Cash Flow Statement"), unsafe_allow_html=True)
-        for label, value, color, bold in [
-            ("Gross Monthly Income", total_gross / 12, TEXT, False),
-            ("Tax & NI", -tax["total_deductions"] / 12, RED, False),
+        st.markdown(card_open("Cash Flow Statement", "Regular month (excl. bonus)" if annual_bonus > 0 else ""), unsafe_allow_html=True)
+        cf_rows = [
+            ("Gross Monthly Salary", gross_salary / 12, TEXT, False),
+        ]
+        if additional_income > 0:
+            cf_rows.append(("Additional Income", additional_income / 12, TEXT, False))
+        cf_rows += [
+            ("Tax & NI", -base_tax["total_deductions"] / 12 if annual_bonus > 0 else -tax["total_deductions"] / 12, RED, False),
             ("Pension (employee)", -monthly_pension_contrib, AMBER, False),
-            ("Net Monthly Income", net_monthly, GREEN, True),
-        ]:
+            ("Net Monthly Income", cashflow_net, GREEN, True),
+        ]
+        for label, value, color, bold in cf_rows:
             st.markdown(row_item(label, gbp(value), color, bold), unsafe_allow_html=True)
         st.markdown(f'<div style="height:.25rem;border-bottom:1px dashed {BORDER};margin:.15rem 0;"></div>', unsafe_allow_html=True)
         for label, value, color, bold in [
@@ -1987,6 +2211,6 @@ st.download_button(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 spacer("2rem")
 st.markdown(
-    f'<div style="text-align:center;padding:1rem 0;border-top:1px solid {BORDER};"><span style="color:{TEXT3};font-size:.7rem;letter-spacing:.06em;">◈ WEALTHVIEW · PERSONAL FINANCE DASHBOARD · FOR ILLUSTRATIVE PURPOSES ONLY</span></div>',
+    f'<div style="text-align:center;padding:1rem 0;border-top:1px solid {BORDER};"><span style="color:{TEXT3};font-size:.7rem;letter-spacing:.06em;">WEALTHVIEW · WEALTH MANAGEMENT · FOR ILLUSTRATIVE PURPOSES ONLY</span></div>',
     unsafe_allow_html=True,
 )
