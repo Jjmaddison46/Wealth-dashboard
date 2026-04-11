@@ -37,6 +37,9 @@ RED = "#EF4444"
 AMBER = "#F59E0B"
 YELLOW = "#FFD60A"
 DEEP_YELLOW = "#E8A308"
+# Unified accent for sliders & interactive controls
+SLIDER_CLR = "#7C3AED"
+SLIDER_CLR2 = "#6D28D9"
 WHITE = "#FFFFFF"
 BLACK = "#000000"
 SHADOW = "0 4px 24px rgba(0,0,0,.35), 0 1px 4px rgba(0,0,0,.25)"
@@ -225,7 +228,7 @@ MILESTONES = [
     (500_000, "£500K", CYAN),
     (1_000_000, "£1M", GREEN),
     (2_000_000, "£2M", AMBER),
-    (5_000_000, "£5M", YELLOW),
+    (5_000_000, "£5M", CYAN),
 ]
 DEFAULT_SETTINGS = {
     "gross_salary": 180_000,
@@ -353,29 +356,24 @@ section[data-testid="stSidebar"] input {{
     font-size: .92rem !important;
 }}
 section[data-testid="stSidebar"] [data-baseweb="select"] > div {{
-    background: #F8FAFC !important;
-    color: {BLACK} !important;
+    background: {CARD} !important;
+    color: {TEXT} !important;
     border-radius: 10px !important;
     border: 1px solid {BORDER_L} !important;
 }}
 section[data-testid="stSidebar"] [data-baseweb="select"] span,
 section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
-    color: {BLACK} !important;
-    fill: {BLACK} !important;
+    color: {TEXT} !important;
+    fill: {TEXT2} !important;
 }}
 /* Fix selectbox cursor/caret line */
 [data-baseweb="select"] input {{
     color: transparent !important;
-    text-shadow: 0 0 0 {BLACK} !important;
+    text-shadow: 0 0 0 {TEXT} !important;
     caret-color: transparent !important;
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
-}}
-section[data-testid="stSidebar"] [data-baseweb="select"] input {{
-    color: transparent !important;
-    text-shadow: 0 0 0 {BLACK} !important;
-    caret-color: transparent !important;
 }}
 [data-baseweb="select"] [role="combobox"] {{
     border: none !important;
@@ -406,110 +404,87 @@ section[data-testid="stSidebar"] [data-baseweb="select"] input {{
     box-shadow: none !important;
 }}
 
-/* ── SLIDER STYLING — deep yellow/orange active track ── */
-section[data-testid="stSidebar"] .stSlider > div {{
+/* ── SLIDER STYLING — purple accent to match palette ── */
+.stSlider > div {{
     padding-top: .15rem;
 }}
-section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] {{
+.stSlider [data-baseweb="slider"] {{
     padding-top: .35rem !important;
     padding-bottom: .2rem !important;
 }}
-section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div {{
+.stSlider [data-baseweb="slider"] > div {{
     height: 10px !important;
 }}
-section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div {{
+.stSlider [data-baseweb="slider"] > div > div {{
     border-radius: 999px !important;
 }}
 /* Background (unfilled) track */
-section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:first-child {{
-    background: rgba(203, 213, 225, 0.20) !important;
+.stSlider [data-baseweb="slider"] > div > div:first-child {{
+    background: rgba(139, 92, 246, 0.15) !important;
 }}
-/* Active (filled) track — deep yellow/orange */
-section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] > div > div:nth-child(2) {{
-    background: linear-gradient(90deg, {DEEP_YELLOW} 0%, #D4920A 100%) !important;
+/* Active (filled) track — purple gradient */
+.stSlider [data-baseweb="slider"] > div > div:nth-child(2) {{
+    background: linear-gradient(90deg, {SLIDER_CLR} 0%, {PURPLE} 100%) !important;
     opacity: 1 !important;
 }}
 /* Thumb */
-section[data-testid="stSidebar"] .stSlider [role="slider"] {{
+.stSlider [role="slider"] {{
     background: #FFFFFF !important;
-    border: 3px solid {DEEP_YELLOW} !important;
-    box-shadow: 0 0 0 4px rgba(232,163,8,.22), 0 1px 4px rgba(0,0,0,.3) !important;
+    border: 3px solid {PURPLE} !important;
+    box-shadow: 0 0 0 4px rgba(139,92,246,.22), 0 1px 4px rgba(0,0,0,.3) !important;
 }}
 /* Slider text colors */
-section[data-testid="stSidebar"] .stSlider label,
-section[data-testid="stSidebar"] .stSlider p,
-section[data-testid="stSidebar"] .stSlider span,
-section[data-testid="stSidebar"] .stSlider small {{
+.stSlider label,
+.stSlider p,
+.stSlider span,
+.stSlider small {{
     color: #FFFFFF !important;
-    font-weight: 800 !important;
+    font-weight: 700 !important;
     background: transparent !important;
     text-shadow: none !important;
 }}
-section[data-testid="stSidebar"] .stSlider [data-testid="stWidgetLabel"] * {{
+.stSlider [data-testid="stWidgetLabel"] * {{
     color: #FFFFFF !important;
-    font-weight: 800 !important;
+    font-weight: 700 !important;
 }}
 
-/* Also style main content area sliders */
-.stSlider [data-baseweb="slider"] > div > div:nth-child(2) {{
-    background: linear-gradient(90deg, {DEEP_YELLOW} 0%, #D4920A 100%) !important;
-    opacity: 1 !important;
-    border-radius: 999px !important;
-}}
-.stSlider [data-baseweb="slider"] > div > div:first-child {{
-    background: rgba(203, 213, 225, 0.20) !important;
-    border-radius: 999px !important;
-}}
-.stSlider [data-baseweb="slider"] [role="slider"] {{
-    background: #FFFFFF !important;
-    border: 3px solid {DEEP_YELLOW} !important;
-    box-shadow: 0 0 0 4px rgba(232,163,8,.22), 0 1px 4px rgba(0,0,0,.3) !important;
-}}
-
-section[data-testid="stSidebar"] .stButton > button {{
+/* ── UNIFIED BUTTON STYLING — all buttons share same base ── */
+.stButton > button,
+[data-testid="stFormSubmitButton"] > button {{
     background: linear-gradient(135deg, {PURPLE} 0%, {BLUE} 100%) !important;
     color: {WHITE} !important;
     border: none !important;
     border-radius: 12px !important;
-    font-weight: 800 !important;
-    font-size: .88rem !important;
-    letter-spacing: .02em !important;
-    padding: .65rem 1rem !important;
-    box-shadow: 0 2px 8px rgba(139,92,246,.3) !important;
-    transition: all .2s ease !important;
-}}
-section[data-testid="stSidebar"] .stButton > button:hover {{
-    background: linear-gradient(135deg, #9D6FFF 0%, #5B9BFF 100%) !important;
-    color: {WHITE} !important;
-    box-shadow: 0 4px 16px rgba(139,92,246,.4) !important;
-    transform: translateY(-1px) !important;
-}}
-/* ── Main content area buttons — raised tactile feel ── */
-.stButton > button,
-[data-testid="stFormSubmitButton"] > button {{
-    background: linear-gradient(135deg, {CARD_H} 0%, {CARD} 100%) !important;
-    color: {WHITE} !important;
-    border: 1px solid {BORDER_L} !important;
-    border-radius: 12px !important;
     font-weight: 700 !important;
     font-size: .86rem !important;
+    letter-spacing: .02em !important;
     padding: .6rem 1.2rem !important;
-    box-shadow: 0 3px 12px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2) !important;
+    box-shadow: 0 2px 10px rgba(139,92,246,.3), 0 1px 3px rgba(0,0,0,.2) !important;
     transition: all .2s cubic-bezier(.4,0,.2,1) !important;
     cursor: pointer !important;
 }}
 .stButton > button:hover,
 [data-testid="stFormSubmitButton"] > button:hover {{
-    background: linear-gradient(135deg, {PURPLE}cc 0%, {BLUE}cc 100%) !important;
+    background: linear-gradient(135deg, #9D6FFF 0%, #5B9BFF 100%) !important;
     color: {WHITE} !important;
-    border-color: {PURPLE} !important;
-    box-shadow: 0 6px 20px rgba(139,92,246,.35), 0 2px 6px rgba(0,0,0,.25) !important;
+    box-shadow: 0 6px 20px rgba(139,92,246,.4), 0 2px 6px rgba(0,0,0,.25) !important;
     transform: translateY(-2px) !important;
 }}
 .stButton > button:active,
 [data-testid="stFormSubmitButton"] > button:active {{
     transform: translateY(0px) !important;
     box-shadow: 0 1px 4px rgba(0,0,0,.3) !important;
+}}
+/* ── Download / secondary buttons — subtler style ── */
+.stDownloadButton > button {{
+    background: {CARD_H} !important;
+    border: 1px solid {BORDER_L} !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25) !important;
+}}
+.stDownloadButton > button:hover {{
+    background: {CARD} !important;
+    border-color: {PURPLE}88 !important;
+    box-shadow: 0 4px 14px rgba(139,92,246,.25) !important;
 }}
 div[data-testid="stMetric"] {{
     display: none;
@@ -524,7 +499,7 @@ div[data-testid="stMetric"] {{
     padding: 0 .5rem;
 }}
 .stTabs [data-baseweb="tab"] {{
-    color: {TEXT3} !important;
+    color: {TEXT2} !important;
     background: transparent !important;
     border: none !important;
     padding: .65rem 1.3rem !important;
@@ -532,22 +507,54 @@ div[data-testid="stMetric"] {{
     font-weight: 500;
     letter-spacing: .02em;
     border-radius: 10px 10px 0 0 !important;
-    transition: all .2s ease;
+    transition: all .2s cubic-bezier(.4,0,.2,1);
     font-family: 'Inter', sans-serif !important;
 }}
 .stTabs [data-baseweb="tab"]:hover {{
-    color: {TEXT2} !important;
-    background: {CARD}55 !important;
+    color: {WHITE} !important;
+    background: rgba(139,92,246,.08) !important;
 }}
 .stTabs [aria-selected="true"] {{
-    color: {PURPLE} !important;
-    background: {CARD} !important;
+    color: {WHITE} !important;
+    background: linear-gradient(180deg, rgba(139,92,246,.12) 0%, transparent 100%) !important;
     border-bottom: 2px solid {PURPLE} !important;
-    font-weight: 600;
+    font-weight: 700;
 }}
 .stTabs [data-baseweb="tab-highlight"],
 .stTabs [data-baseweb="tab-border"] {{
     display: none;
+}}
+/* ── EXPANDER — dark themed ── */
+.streamlit-expanderHeader {{
+    background: {CARD} !important;
+    border: 1px solid {BORDER} !important;
+    border-radius: 12px !important;
+    color: {TEXT} !important;
+    font-weight: 600 !important;
+    font-size: .85rem !important;
+    transition: all .2s ease !important;
+}}
+.streamlit-expanderHeader:hover {{
+    border-color: {PURPLE}66 !important;
+    background: {CARD_H} !important;
+}}
+.streamlit-expanderContent {{
+    border: 1px solid {BORDER} !important;
+    border-top: none !important;
+    border-radius: 0 0 12px 12px !important;
+    background: {BG_ALT} !important;
+}}
+details[data-testid="stExpander"] {{
+    border: 1px solid {BORDER} !important;
+    border-radius: 12px !important;
+    background: {CARD} !important;
+}}
+details[data-testid="stExpander"] summary {{
+    color: {TEXT} !important;
+    font-weight: 600 !important;
+}}
+details[data-testid="stExpander"] > div {{
+    background: {BG_ALT} !important;
 }}
 .js-plotly-plot, .plotly {{
     background: transparent !important;
@@ -562,6 +569,26 @@ div[data-testid="stMetric"] {{
 ::-webkit-scrollbar-thumb {{
     background: {BORDER_L};
     border-radius: 3px;
+}}
+::-webkit-scrollbar-thumb:hover {{
+    background: {PURPLE}66;
+}}
+/* ── Global transition for all interactive elements ── */
+input, select, textarea, button, [role="slider"], [data-baseweb="select"] > div {{
+    transition: all .2s cubic-bezier(.4,0,.2,1) !important;
+}}
+/* ── Inputs focus glow ── */
+section[data-testid="stSidebar"] input:focus {{
+    border-color: {PURPLE}88 !important;
+    box-shadow: 0 0 0 3px rgba(139,92,246,.15) !important;
+}}
+/* ── Radio buttons / toggles styling ── */
+.stRadio [role="radiogroup"] label {{
+    color: {TEXT2} !important;
+    transition: all .15s ease !important;
+}}
+.stRadio [role="radiogroup"] label:hover {{
+    color: {TEXT} !important;
 }}
 div[data-testid="column"] > div {{
     padding: 0 .3rem;
@@ -737,13 +764,13 @@ def render_kpi_card(label, value, color=PURPLE, icon="", sub="", info=""):
         unsafe_allow_html=True,
     )
 def kpi_small(label, value, color=TEXT):
-    return f"""<div style="background:{CARD};border:1px solid {BORDER};border-radius:10px;padding:.75rem .9rem;text-align:center;">
-    <div style="color:{TEXT3};font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;font-weight:500;">{label}</div>
+    return f"""<div style="background:{CARD};border:1px solid {BORDER};border-radius:12px;padding:.75rem .9rem;text-align:center;">
+    <div style="color:{TEXT2};font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600;">{label}</div>
     <div style="font-size:1.1rem;font-weight:700;color:{color};margin-top:.2rem;">{value}</div></div>"""
 def card_open(title="", subtitle=""):
-    sub = f'<span style="color:{TEXT3};font-size:.72rem;font-weight:400;margin-left:.5rem;">{subtitle}</span>' if subtitle else ""
-    h = f'<div style="color:{TEXT};font-size:.95rem;font-weight:600;margin-bottom:.7rem;letter-spacing:-.01em;">{title}{sub}</div>' if title else ""
-    return f'<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:16px;padding:1.3rem 1.5rem;box-shadow:{SHADOW};margin-bottom:.8rem;">{h}'
+    sub = f'<span style="color:{TEXT2};font-size:.75rem;font-weight:400;margin-left:.5rem;">{subtitle}</span>' if subtitle else ""
+    h = f'<div style="color:{TEXT};font-size:.95rem;font-weight:700;margin-bottom:.75rem;letter-spacing:-.01em;">{title}{sub}</div>' if title else ""
+    return f'<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:16px;padding:1.25rem 1.4rem;box-shadow:{SHADOW};margin-bottom:.75rem;">{h}'
 def card_close():
     return "</div>"
 def section_header(title, icon=""):
@@ -1064,7 +1091,7 @@ with st.sidebar:
     )
     with st.form("forecast_assumptions_form", clear_on_submit=False):
         st.markdown(
-            f'<div style="color:{AMBER};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Employment Package</div>',
+            f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Employment Package</div>',
             unsafe_allow_html=True,
         )
         draft_gross_salary = money_text_input("Gross Salary (£/yr)", st.session_state.gross_salary, "gross_salary_input")
@@ -1083,7 +1110,7 @@ with st.sidebar:
         draft_pension_contrib_pct = st.slider("Pension Contribution %", 0.0, 30.0, float(st.session_state.pension_contrib_pct), 0.5)
 
         st.markdown(
-            f'<div style="color:{AMBER};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Monthly Investment Contributions</div>',
+            f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Monthly Investment Contributions</div>',
             unsafe_allow_html=True,
         )
         draft_monthly_invest_cash = money_text_input("Monthly Cash Savings (£)", st.session_state.monthly_invest_cash, "monthly_invest_cash_input",
@@ -1092,7 +1119,7 @@ with st.sidebar:
                                                         help_text="Amount invested in stocks and shares each month")
 
         st.markdown(
-            f'<div style="color:{AMBER};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Growth Rate Assumptions</div>',
+            f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Growth Rate Assumptions</div>',
             unsafe_allow_html=True,
         )
         draft_cash_interest_rate = st.slider("Cash Interest Rate %", 0.0, 10.0, float(st.session_state.cash_interest_rate), 0.1,
@@ -1103,7 +1130,7 @@ with st.sidebar:
         draft_property_growth = st.slider("Yearly Real Estate Growth %", 0.0, 10.0, float(st.session_state.property_growth), 0.5)
 
         st.markdown(
-            f'<div style="color:{AMBER};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Planning & Goals</div>',
+            f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Planning & Goals</div>',
             unsafe_allow_html=True,
         )
         draft_current_age = st.number_input("Current Age", 18, 80, int(st.session_state.current_age))
@@ -1354,7 +1381,7 @@ with st.expander("Getting Started — How to Use This Dashboard", expanded=False
 <div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;"><b style="color:{WHITE}">Overview</b> and <b style="color:{WHITE}">History</b> track your progress. <b style="color:{WHITE}">Portfolio</b> shows allocation. <b style="color:{WHITE}">Forecast</b> and <b style="color:{WHITE}">Goals</b> help plan ahead. <b style="color:{WHITE}">Cash Flow</b> and <b style="color:{WHITE}">Salary Calculator</b> handle monthly budgeting.</div></div></div>
 
 <div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;">
-<div style="min-width:32px;height:32px;border-radius:8px;background:{AMBER}22;border:1px solid {AMBER}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{AMBER};flex-shrink:0;">4</div>
+<div style="min-width:32px;height:32px;border-radius:8px;background:{BLUE}22;border:1px solid {BLUE}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{BLUE};flex-shrink:0;">4</div>
 <div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Stay Consistent</div>
 <div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;">Save snapshots regularly each month to build a rich wealth history. The more data you record, the more powerful your insights and forecasts become.</div></div></div>
 </div>
