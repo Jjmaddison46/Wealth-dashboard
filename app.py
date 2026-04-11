@@ -28,7 +28,7 @@ BORDER = "#1E2A45"
 BORDER_L = "#253255"
 TEXT = "#FFFFFF"
 TEXT2 = "#C7D2E3"
-TEXT3 = "#94A3B8"
+TEXT3 = "#E2E8F0"
 PURPLE = "#8B5CF6"
 BLUE = "#3B82F6"
 CYAN = "#06B6D4"
@@ -483,6 +483,33 @@ section[data-testid="stSidebar"] .stButton > button:hover {{
     color: {WHITE} !important;
     box-shadow: 0 4px 16px rgba(139,92,246,.4) !important;
     transform: translateY(-1px) !important;
+}}
+/* ── Main content area buttons — raised tactile feel ── */
+.stButton > button,
+[data-testid="stFormSubmitButton"] > button {{
+    background: linear-gradient(135deg, {CARD_H} 0%, {CARD} 100%) !important;
+    color: {WHITE} !important;
+    border: 1px solid {BORDER_L} !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: .86rem !important;
+    padding: .6rem 1.2rem !important;
+    box-shadow: 0 3px 12px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2) !important;
+    transition: all .2s cubic-bezier(.4,0,.2,1) !important;
+    cursor: pointer !important;
+}}
+.stButton > button:hover,
+[data-testid="stFormSubmitButton"] > button:hover {{
+    background: linear-gradient(135deg, {PURPLE}cc 0%, {BLUE}cc 100%) !important;
+    color: {WHITE} !important;
+    border-color: {PURPLE} !important;
+    box-shadow: 0 6px 20px rgba(139,92,246,.35), 0 2px 6px rgba(0,0,0,.25) !important;
+    transform: translateY(-2px) !important;
+}}
+.stButton > button:active,
+[data-testid="stFormSubmitButton"] > button:active {{
+    transform: translateY(0px) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3) !important;
 }}
 div[data-testid="stMetric"] {{
     display: none;
@@ -1555,7 +1582,7 @@ with tab_history:
             values = display_df[col_name]
             percentages = (values / totals * 100).fillna(0)
             texts = [
-                f"{gbp(v)}<br>{p:.0f}%" if v > 0 and p >= 3 else ""
+                f"{gbp(v)}<br>{p:.0f}%" if v > 0 and p >= 2 else ""
                 for v, p in zip(values, percentages)
             ]
             fig.add_trace(go.Bar(
@@ -1565,9 +1592,10 @@ with tab_history:
                 marker=dict(color=color),
                 text=texts,
                 textposition="inside",
-                textfont=dict(color=TEXT, size=10, family="Inter"),
+                textfont=dict(color=TEXT, size=12, family="Inter"),
                 insidetextanchor="middle",
                 hovertemplate=f"<b>{label}</b><br>%{{x}}: £%{{y:,.0f}}<extra></extra>",
+                constraintext="none",
             ))
         fig.add_trace(go.Scatter(
             x=display_df["x_label"],
@@ -1582,8 +1610,9 @@ with tab_history:
             hovertemplate="<b>Total Net Worth</b><br>%{x}: £%{y:,.0f}<extra></extra>",
         ))
         fig.update_layout(**make_layout({
-            "height": 470,
+            "height": 520,
             "barmode": "stack",
+            "uniformtext": dict(minsize=10, mode="show"),
             "legend": dict(
                 orientation="h",
                 y=-0.2,
@@ -2279,56 +2308,158 @@ with tab_salary:
     st.markdown(
         f"""<div style="display:flex;align-items:baseline;gap:.6rem;margin:1rem 0 .5rem 0;">
         <span style="font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,{PURPLE},{BLUE});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">UK Salary Calculator</span>
-        <span style="color:{TEXT3};font-size:.75rem;">{"Scotland" if scotland_tax else "England / Wales / NI"} · current assumptions</span></div>""",
+        <span style="color:{TEXT2};font-size:.75rem;">{"Scotland" if scotland_tax else "England / Wales / NI"} · current assumptions</span></div>""",
         unsafe_allow_html=True,
     )
-    st.markdown(f'<div style="color:{TEXT3};font-size:.8rem;margin-bottom:1rem;">A standalone take-home pay tool based on your current employment package assumptions.</div>', unsafe_allow_html=True)
-    s1, s2, s3, s4 = st.columns(4)
-    s1.markdown(kpi_html("Gross Income", gbp(total_gross), TEXT), unsafe_allow_html=True)
-    s2.markdown(kpi_html("Take Home (Annual)", gbp(tax["net_annual"]), GREEN), unsafe_allow_html=True)
-    s3.markdown(kpi_html("Take Home (Monthly)", gbp(tax["net_monthly"]), GREEN), unsafe_allow_html=True)
-    s4.markdown(kpi_html("Effective Tax Rate", pct_fmt(tax["effective_rate"]), PURPLE), unsafe_allow_html=True)
+    st.markdown(f'<div style="color:{TEXT2};font-size:.8rem;margin-bottom:1rem;">A standalone take-home pay tool based on your current employment package assumptions.</div>', unsafe_allow_html=True)
+    # ── Personal Allowance notice ──
+    _sal_pa = tax["personal_allowance"]
+    if total_gross - employee_pension_annual > 100_000:
+        _pa_note = f'Your adjusted net income is over the personal allowance threshold of £100,000. Your allowance has been reduced to £{_sal_pa:,.0f} (from the default £12,570).'
+        st.markdown(f'<div style="background:{CARD};border:1px solid {BORDER_L};border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.2rem;color:{TEXT};font-size:.85rem;line-height:1.6;text-align:center;">{_pa_note}</div>', unsafe_allow_html=True)
+    # ── Base salary calc (excl bonus) ──
+    _sal_base_gross = gross_salary + additional_income
+    _sal_base_pension = employee_pension_annual
+    _sal_base_taxable_gross = _sal_base_gross - _sal_base_pension
+    _sal_base_tax = calc_uk_tax(_sal_base_taxable_gross, scotland=scotland_tax)
+    _sal_base_income_tax = _sal_base_tax["income_tax"]
+    _sal_base_ni = _sal_base_tax["ni"]
+    _sal_base_net = _sal_base_tax["net_annual"]
+    # ── Full salary calc (incl bonus — for bonus month) ──
+    _sal_full_gross = total_gross
+    _sal_full_pension = employee_pension_annual
+    _sal_full_taxable_gross = _sal_full_gross - _sal_full_pension
+    _sal_full_tax = calc_uk_tax(_sal_full_taxable_gross, scotland=scotland_tax)
+    _sal_full_income_tax = _sal_full_tax["income_tax"]
+    _sal_full_ni = _sal_full_tax["ni"]
+    _sal_full_net = _sal_full_tax["net_annual"]
+    # ── Bonus month incremental ──
+    _bonus_month_extra_net = _sal_full_net - _sal_base_net if annual_bonus > 0 else 0
+    _sal_base_monthly_net = _sal_base_net / 12
+    _sal_bonus_month_net = _sal_base_monthly_net + _bonus_month_extra_net if annual_bonus > 0 else _sal_base_monthly_net
+    # ── Build salary breakdown table ──
+    def _sal_row(label, yearly, is_bold=False, is_green=False, is_red=False):
+        monthly = yearly / 12
+        weekly = yearly / 52
+        daily = yearly / 260
+        fw = "700" if is_bold else "500"
+        clr = GREEN if is_green else (RED if is_red else TEXT)
+        def _fmt(v, show_sign=False):
+            sign = "-" if v < 0 else ""
+            return f'{sign}£{abs(v):,.2f}'
+        return f'''<tr style="border-bottom:1px solid {BORDER};">
+            <td style="padding:.65rem .8rem;color:{clr};font-weight:{fw};font-size:.88rem;">{label}</td>
+            <td style="padding:.65rem .8rem;color:{clr};font-weight:{fw};font-size:.88rem;text-align:right;">{_fmt(yearly)}</td>
+            <td style="padding:.65rem .8rem;color:{clr};font-weight:{fw};font-size:.88rem;text-align:right;">{_fmt(monthly)}</td>
+            <td style="padding:.65rem .8rem;color:{clr};font-weight:{fw};font-size:.88rem;text-align:right;">{_fmt(weekly)}</td>
+            <td style="padding:.65rem .8rem;color:{clr};font-weight:{fw};font-size:.88rem;text-align:right;">{_fmt(daily)}</td>
+        </tr>'''
+    # Use base (excl bonus) for the main breakdown table
+    _tbl_gross = _sal_base_gross
+    _tbl_pension = _sal_base_pension
+    _tbl_taxable = _sal_base_taxable_gross
+    _tbl_income_tax = _sal_base_income_tax
+    _tbl_ni = _sal_base_ni
+    _tbl_net = _sal_base_net
+    _sal_table = f'''<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:16px;padding:1.2rem;box-shadow:{SHADOW};margin-bottom:1rem;">
+    <div style="font-size:1rem;font-weight:700;color:{TEXT};margin-bottom:.8rem;">{"Base Salary Breakdown (excl. bonus)" if annual_bonus > 0 else "Salary Breakdown"}</div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+    <thead><tr style="border-bottom:2px solid {BORDER_L};">
+        <th style="text-align:left;padding:.6rem .8rem;color:{TEXT2};font-weight:600;font-size:.82rem;"></th>
+        <th style="text-align:right;padding:.6rem .8rem;color:{TEXT2};font-weight:600;font-size:.82rem;">Yearly</th>
+        <th style="text-align:right;padding:.6rem .8rem;color:{TEXT2};font-weight:600;font-size:.82rem;">Monthly</th>
+        <th style="text-align:right;padding:.6rem .8rem;color:{TEXT2};font-weight:600;font-size:.82rem;">Weekly</th>
+        <th style="text-align:right;padding:.6rem .8rem;color:{TEXT2};font-weight:600;font-size:.82rem;">Daily</th>
+    </tr></thead>
+    <tbody>
+    {_sal_row("Gross Income", _tbl_gross, is_bold=True)}
+    {_sal_row("Pension Deductions", -_tbl_pension)}
+    {_sal_row("Taxable Income", _tbl_taxable, is_bold=True)}
+    {_sal_row("Income Tax", -_tbl_income_tax, is_red=True)}
+    {_sal_row("National Insurance", -_tbl_ni, is_red=True)}
+    {_sal_row("Take Home", _tbl_net, is_bold=True, is_green=True)}
+    </tbody></table></div></div>'''
+    st.markdown(_sal_table, unsafe_allow_html=True)
+    # ── Bonus month breakdown (only if bonus > 0) ──
+    if annual_bonus > 0:
+        _bonus_extra_tax = _sal_full_income_tax - _sal_base_income_tax
+        _bonus_extra_ni = _sal_full_ni - _sal_base_ni
+        st.markdown(f'''<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {AMBER}44;border-radius:16px;padding:1.2rem;box-shadow:{SHADOW};margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem;">
+            <span style="font-size:1rem;font-weight:700;color:{AMBER};">Bonus Month ({bonus_month})</span>
+            <span style="background:{AMBER}22;color:{AMBER};font-size:.72rem;font-weight:600;padding:.15rem .5rem;border-radius:6px;">+{gbp(annual_bonus)} bonus</span>
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="border-bottom:2px solid {BORDER_L};">
+            <th style="text-align:left;padding:.55rem .8rem;color:{TEXT2};font-weight:600;font-size:.82rem;"></th>
+            <th style="text-align:right;padding:.55rem .8rem;color:{TEXT2};font-weight:600;font-size:.82rem;">Regular Month</th>
+            <th style="text-align:right;padding:.55rem .8rem;color:{TEXT2};font-weight:600;font-size:.82rem;">Bonus Month ({bonus_month})</th>
+            <th style="text-align:right;padding:.55rem .8rem;color:{TEXT2};font-weight:600;font-size:.82rem;">Difference</th>
+        </tr></thead>
+        <tbody>
+        <tr style="border-bottom:1px solid {BORDER};">
+            <td style="padding:.55rem .8rem;color:{TEXT};font-weight:600;font-size:.86rem;">Gross Pay</td>
+            <td style="padding:.55rem .8rem;color:{TEXT};font-size:.86rem;text-align:right;">£{_sal_base_gross/12:,.2f}</td>
+            <td style="padding:.55rem .8rem;color:{TEXT};font-size:.86rem;text-align:right;">£{(_sal_base_gross/12 + annual_bonus):,.2f}</td>
+            <td style="padding:.55rem .8rem;color:{AMBER};font-weight:600;font-size:.86rem;text-align:right;">+£{annual_bonus:,.2f}</td>
+        </tr>
+        <tr style="border-bottom:1px solid {BORDER};">
+            <td style="padding:.55rem .8rem;color:{TEXT};font-weight:600;font-size:.86rem;">Additional Tax</td>
+            <td style="padding:.55rem .8rem;color:{TEXT2};font-size:.86rem;text-align:right;">—</td>
+            <td style="padding:.55rem .8rem;color:{RED};font-size:.86rem;text-align:right;">-£{_bonus_extra_tax:,.2f}</td>
+            <td style="padding:.55rem .8rem;color:{RED};font-weight:600;font-size:.86rem;text-align:right;">-£{_bonus_extra_tax:,.2f}</td>
+        </tr>
+        <tr style="border-bottom:1px solid {BORDER};">
+            <td style="padding:.55rem .8rem;color:{TEXT};font-weight:600;font-size:.86rem;">Additional NI</td>
+            <td style="padding:.55rem .8rem;color:{TEXT2};font-size:.86rem;text-align:right;">—</td>
+            <td style="padding:.55rem .8rem;color:{RED};font-size:.86rem;text-align:right;">-£{_bonus_extra_ni:,.2f}</td>
+            <td style="padding:.55rem .8rem;color:{RED};font-weight:600;font-size:.86rem;text-align:right;">-£{_bonus_extra_ni:,.2f}</td>
+        </tr>
+        <tr style="border-bottom:1px solid {BORDER};">
+            <td style="padding:.55rem .8rem;color:{GREEN};font-weight:700;font-size:.88rem;">Take Home</td>
+            <td style="padding:.55rem .8rem;color:{GREEN};font-weight:700;font-size:.88rem;text-align:right;">£{_sal_base_monthly_net:,.2f}</td>
+            <td style="padding:.55rem .8rem;color:{GREEN};font-weight:700;font-size:.88rem;text-align:right;">£{_sal_bonus_month_net:,.2f}</td>
+            <td style="padding:.55rem .8rem;color:{GREEN};font-weight:700;font-size:.88rem;text-align:right;">+£{_bonus_month_extra_net:,.2f}</td>
+        </tr>
+        </tbody></table></div></div>''', unsafe_allow_html=True)
     spacer("1rem")
     left, right = st.columns([1.15, 0.85])
     with left:
-        st.markdown(card_open("Income Statement"), unsafe_allow_html=True)
-        for label, value, color, bold in [
-            ("Gross Income (salary + bonus)", total_gross, TEXT, False),
-            ("Pension Contribution (employee)", -employee_pension_annual, AMBER, False),
-            ("Taxable Income", tax["taxable_income"], TEXT, True),
-            ("Personal Allowance", tax["personal_allowance"], TEXT2, False),
-            ("Income Tax", -tax["income_tax"], RED, False),
-            ("National Insurance", -tax["ni"], RED, False),
-            ("Total Deductions", -tax["total_deductions"], RED, True),
-            ("Net Annual Income", tax["net_annual"], GREEN, True),
-            ("Net Monthly Income", tax["net_monthly"], GREEN, True),
-        ]:
-            st.markdown(row_item(label, gbp(value), color, bold), unsafe_allow_html=True)
-        st.markdown(card_close(), unsafe_allow_html=True)
-    with right:
         st.markdown(card_open("Tax Composition"), unsafe_allow_html=True)
         fig = go.Figure(go.Pie(
-            labels=["Income Tax", "National Insurance", "Net Pay"],
-            values=[tax["income_tax"], tax["ni"], tax["net_annual"]],
+            labels=["Income Tax", "National Insurance", "Pension", "Net Pay"],
+            values=[_sal_base_income_tax, _sal_base_ni, _sal_base_pension, _sal_base_net],
             hole=0.58,
-            marker=dict(colors=[RED, AMBER, GREEN], line=dict(color=BG, width=2)),
+            marker=dict(colors=[RED, AMBER, BLUE, GREEN], line=dict(color=BG, width=2)),
             textinfo="label+percent+value",
             texttemplate="<b>%{label}</b><br>£%{value:,.0f}",
             textfont=BOLD_WHITE_SM,
             hovertemplate="<b>%{label}</b><br>£%{value:,.0f}<extra></extra>",
         ))
-        fig.update_layout(**make_layout({"height": 280, "showlegend": False}))
+        fig.update_layout(**make_layout({"height": 320, "showlegend": False}))
         st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
         st.markdown(card_close(), unsafe_allow_html=True)
+    with right:
         st.markdown(card_open("Tax Band Detail"), unsafe_allow_html=True)
-        if tax["band_breakdown"]:
-            for band in tax["band_breakdown"]:
+        if _sal_base_tax["band_breakdown"]:
+            for band in _sal_base_tax["band_breakdown"]:
                 st.markdown(
                     row_item(f"{pct_fmt(band['rate'] * 100)} on {gbp(band['band_width'])}", gbp(band["tax"]), RED),
                     unsafe_allow_html=True,
                 )
         else:
-            st.markdown(f'<span style="color:{TEXT3};font-size:.82rem;">No tax bands applicable</span>', unsafe_allow_html=True)
+            st.markdown(f'<span style="color:{TEXT2};font-size:.82rem;">No tax bands applicable</span>', unsafe_allow_html=True)
+        st.markdown(card_close(), unsafe_allow_html=True)
+        # KPI summary cards
+        st.markdown(card_open("Quick Summary"), unsafe_allow_html=True)
+        for _lbl, _val, _clr in [
+            ("Effective Tax Rate", pct_fmt(_sal_base_tax["effective_rate"]), PURPLE),
+            ("Personal Allowance", gbp(_sal_pa), TEXT),
+            ("Monthly Take Home", f'£{_sal_base_monthly_net:,.2f}', GREEN),
+        ]:
+            st.markdown(row_item(_lbl, _val, _clr), unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # EXPORT REPORT
