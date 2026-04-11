@@ -56,10 +56,80 @@ GRID_AXIS = {"gridcolor": BORDER, "gridwidth": 1, "zeroline": False}
 CLEAN_AXIS = {"showgrid": False, "zeroline": False}
 PLT_CFG = {"displayModeBar": False}
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# PERSISTENCE
+# PERSISTENCE (Google Sheets + JSON fallback)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SNAPSHOT_FILE = "wealthview_snapshots.json"
+SETTINGS_FILE = "wealthview_settings.json"
+
+# ── Google Sheets connection ──
+def _get_gsheet():
+    """Return (spreadsheet, True) if Google Sheets is configured, else (None, False)."""
+    try:
+        if "gcp_service_account" not in st.secrets:
+            return None, False
+        import gspread
+        from google.oauth2.service_account import Credentials
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive",
+        ]
+        creds = Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"], scopes=scopes
+        )
+        gc = gspread.authorize(creds)
+        sheet_url = st.secrets.get("sheets", {}).get("spreadsheet_url", "")
+        if sheet_url:
+            sh = gc.open_by_url(sheet_url)
+        else:
+            sheet_name = st.secrets.get("sheets", {}).get("spreadsheet_name", "WealthView Data")
+            try:
+                sh = gc.open(sheet_name)
+            except gspread.SpreadsheetNotFound:
+                sh = gc.create(sheet_name)
+                sh.share(None, perm_type="anyone", role="writer")
+        return sh, True
+    except Exception:
+        return None, False
+
+@st.cache_resource(ttl=300)
+def _get_gsheet_cached():
+    return _get_gsheet()
+
+def _ensure_worksheet(sh, title, headers):
+    """Get or create a worksheet with the given headers."""
+    try:
+        ws = sh.worksheet(title)
+    except Exception:
+        ws = sh.add_worksheet(title=title, rows=500, cols=len(headers))
+        ws.update("A1", [headers])
+    return ws
+
+# ── Snapshot persistence ──
 def load_snapshots():
+    sh, ok = _get_gsheet_cached()
+    if ok and sh:
+        try:
+            ws = _ensure_worksheet(sh, "Snapshots", [
+                "period_key", "cash", "investments", "crypto", "pension",
+                "real_estate_equity", "net_worth", "saved_at"
+            ])
+            rows = ws.get_all_records()
+            data = {}
+            for row in rows:
+                pk = str(row.get("period_key", ""))
+                if pk:
+                    data[pk] = {
+                        "cash": int(row.get("cash", 0)),
+                        "investments": int(row.get("investments", 0)),
+                        "crypto": int(row.get("crypto", 0)),
+                        "pension": int(row.get("pension", 0)),
+                        "real_estate_equity": int(row.get("real_estate_equity", 0)),
+                        "net_worth": int(row.get("net_worth", 0)),
+                        "saved_at": str(row.get("saved_at", "")),
+                    }
+            return data
+        except Exception:
+            pass
     if os.path.exists(SNAPSHOT_FILE):
         try:
             with open(SNAPSHOT_FILE, "r") as f:
@@ -67,9 +137,84 @@ def load_snapshots():
         except (json.JSONDecodeError, IOError):
             return {}
     return {}
+
 def save_snapshots(data):
     with open(SNAPSHOT_FILE, "w") as f:
         json.dump(data, f, indent=2)
+    sh, ok = _get_gsheet_cached()
+    if ok and sh:
+        try:
+            ws = _ensure_worksheet(sh, "Snapshots", [
+                "period_key", "cash", "investments", "crypto", "pension",
+                "real_estate_equity", "net_worth", "saved_at"
+            ])
+            rows = [["period_key", "cash", "investments", "crypto", "pension",
+                     "real_estate_equity", "net_worth", "saved_at"]]
+            for pk in sorted(data.keys()):
+                sd = data[pk]
+                rows.append([
+                    pk,
+                    sd.get("cash", 0),
+                    sd.get("investments", 0),
+                    sd.get("crypto", 0),
+                    sd.get("pension", 0),
+                    sd.get("real_estate_equity", 0),
+                    sd.get("net_worth", 0),
+                    sd.get("saved_at", ""),
+                ])
+            ws.clear()
+            ws.update("A1", rows)
+        except Exception:
+            pass
+
+# ── Settings persistence ──
+def load_settings():
+    sh, ok = _get_gsheet_cached()
+    if ok and sh:
+        try:
+            ws = _ensure_worksheet(sh, "Settings", ["key", "value"])
+            rows = ws.get_all_records()
+            settings = {}
+            for row in rows:
+                k = str(row.get("key", ""))
+                v = row.get("value", "")
+                if k:
+                    try:
+                        settings[k] = json.loads(str(v))
+                    except (json.JSONDecodeError, TypeError):
+                        settings[k] = v
+            return settings if settings else None
+        except Exception:
+            pass
+    if os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, "r") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return None
+    return None
+
+def save_settings(settings_dict):
+    with open(SETTINGS_FILE, "w") as f:
+        json.dump(settings_dict, f, indent=2)
+    sh, ok = _get_gsheet_cached()
+    if ok and sh:
+        try:
+            ws = _ensure_worksheet(sh, "Settings", ["key", "value"])
+            rows = [["key", "value"]]
+            for k, v in settings_dict.items():
+                rows.append([k, json.dumps(v)])
+            ws.clear()
+            ws.update("A1", rows)
+        except Exception:
+            pass
+
+def _check_gsheets_status():
+    sh, ok = _get_gsheet_cached()
+    return ok
+
+GSHEETS_CONNECTED = _check_gsheets_status()
+
 if "snapshots" not in st.session_state:
     st.session_state.snapshots = load_snapshots()
 if "snapshot_saved_flag" not in st.session_state:
@@ -109,6 +254,18 @@ DEFAULT_SETTINGS = {
     "expense_discretionary": 0,
     "expense_other": 0,
 }
+# Load persisted settings (from Google Sheets or JSON) on first run
+if "_settings_loaded" not in st.session_state:
+    _persisted = load_settings()
+    if _persisted:
+        for k, v in _persisted.items():
+            if k == "custom_goals":
+                st.session_state.custom_goals = v
+            elif k == "target_alloc":
+                st.session_state.target_alloc = v
+            elif k in DEFAULT_SETTINGS:
+                st.session_state[k] = v
+    st.session_state._settings_loaded = True
 if "custom_goals" not in st.session_state:
     st.session_state.custom_goals = [
         {"name": "Financial Freedom", "target": 2_000_000, "target_age": 50},
@@ -125,6 +282,17 @@ if "monthly_invest" in st.session_state and "monthly_invest_cash" not in st.sess
     st.session_state.monthly_invest_stocks = max(0, old_val - 500)
 if "cash_interest_rate" not in st.session_state:
     st.session_state.cash_interest_rate = 4.5
+def _persist_all_settings():
+    """Save all current settings to persistent storage."""
+    settings = {}
+    for k in DEFAULT_SETTINGS:
+        if k in st.session_state:
+            settings[k] = st.session_state[k]
+    if "custom_goals" in st.session_state:
+        settings["custom_goals"] = st.session_state.custom_goals
+    if "target_alloc" in st.session_state:
+        settings["target_alloc"] = st.session_state.target_alloc
+    save_settings(settings)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # GLOBAL CSS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -195,16 +363,27 @@ section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
     color: {BLACK} !important;
     fill: {BLACK} !important;
 }}
-/* Fix selectbox underline artifacts */
-section[data-testid="stSidebar"] [data-baseweb="select"] [role="combobox"],
-section[data-testid="stSidebar"] [data-baseweb="select"] input {{
+/* Fix selectbox cursor/caret line */
+[data-baseweb="select"] input {{
+    color: transparent !important;
+    text-shadow: 0 0 0 {BLACK} !important;
+    caret-color: transparent !important;
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
+}}
+section[data-testid="stSidebar"] [data-baseweb="select"] input {{
+    color: transparent !important;
+    text-shadow: 0 0 0 {BLACK} !important;
     caret-color: transparent !important;
 }}
-section[data-testid="stSidebar"] [data-baseweb="select"] > div::after,
-section[data-testid="stSidebar"] [data-baseweb="select"] > div::before {{
+[data-baseweb="select"] [role="combobox"] {{
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}}
+[data-baseweb="select"] > div::after,
+[data-baseweb="select"] > div::before {{
     display: none !important;
 }}
 /* Also fix main content selectboxes */
@@ -514,8 +693,7 @@ def kpi_html(label, value, color=PURPLE, icon="", sub="", info=""):
     return (
         f'<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);'
         f'border:1px solid {BORDER};border-radius:14px;padding:1.05rem 1.2rem;'
-        f'box-shadow:{SHADOW_SM};position:relative;overflow:hidden;min-height:130px;'
-        f'display:flex;flex-direction:column;justify-content:flex-start;height:100%;">'
+        f'box-shadow:{SHADOW_SM};position:relative;overflow:hidden;min-height:230px;">'
         f'<div style="position:absolute;top:0;left:0;right:0;height:2px;'
         f'background:linear-gradient(90deg,{color}88,transparent);"></div>'
         f'<div style="color:{TEXT2};font-size:.7rem;text-transform:uppercase;'
@@ -817,6 +995,20 @@ with st.sidebar:
             f'<div style="color:{TEXT3};font-size:.72rem;text-align:center;margin-top:.4rem;">{snapshot_count} snapshot{"s" if snapshot_count != 1 else ""} saved</div>',
             unsafe_allow_html=True,
         )
+    if GSHEETS_CONNECTED:
+        st.markdown(
+            f'<div style="color:{GREEN};font-size:.68rem;text-align:center;margin-top:.25rem;display:flex;align-items:center;justify-content:center;gap:.3rem;">'
+            f'<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:{GREEN};"></span>'
+            f'Google Sheets synced</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f'<div style="color:{TEXT3};font-size:.68rem;text-align:center;margin-top:.25rem;display:flex;align-items:center;justify-content:center;gap:.3rem;">'
+            f'<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:{TEXT3};"></span>'
+            f'Local storage only</div>',
+            unsafe_allow_html=True,
+        )
     warnings = []
     if cash == 0 and investments == 0 and crypto == 0 and pension_val == 0 and real_estate_equity == 0:
         warnings.append("All monthly asset values are currently zero.")
@@ -909,6 +1101,7 @@ with st.sidebar:
         st.session_state.expected_return = draft_expected_return
         st.session_state.inflation = draft_inflation
         st.session_state.property_growth = draft_property_growth
+        _persist_all_settings()
         st.rerun()
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # BUILD HISTORY & CURRENT CALCULATIONS
@@ -1182,7 +1375,7 @@ with tab_overview:
             gbp(net_worth),
             color=PURPLE,
             icon="◈",
-            info="Your total tracked wealth. Calculated as Cash Savings + Stock and Shares + Crypto + Pension + Real Estate Equity.",
+            info="Total tracked wealth across all asset classes for this reporting period.",
         )
     with c2:
         render_kpi_card(
@@ -1190,7 +1383,7 @@ with tab_overview:
             gbp(cash),
             color=CYAN,
             icon="◇",
-            info=f"Cash held in savings or cash-based accounts. Growing at {pct_fmt(cash_interest_rate)} p.a.",
+            info=f"Cash held in savings or cash ISAs. Growing at {pct_fmt(cash_interest_rate)} per year.",
         )
     with c3:
         render_kpi_card(
@@ -1198,7 +1391,7 @@ with tab_overview:
             gbp(investments),
             color=BLUE,
             icon="△",
-            info=f"The current value of your stock and shares investments. Expected return: {pct_fmt(expected_return)} p.a.",
+            info=f"Current value of stock and shares ISA/GIA. Expected return: {pct_fmt(expected_return)} p.a.",
         )
     with c4:
         render_kpi_card(
@@ -1206,7 +1399,7 @@ with tab_overview:
             gbp(crypto),
             color=AMBER,
             icon="◌",
-            info="The current value of your crypto holdings.",
+            info="Current value of cryptocurrency holdings across all wallets and exchanges.",
         )
     with c5:
         render_kpi_card(
@@ -1214,7 +1407,7 @@ with tab_overview:
             gbp(pension_val),
             color=GREEN,
             icon="◎",
-            info="The current value of your pension pot.",
+            info="Current value of your workplace and personal pension contributions.",
         )
     spacer(".55rem")
     c6, c7, c8, c9 = st.columns(4)
@@ -1224,7 +1417,7 @@ with tab_overview:
             gbp(real_estate_equity),
             color=PURPLE,
             icon="⬡",
-            info="Your tracked real estate equity value for this reporting period.",
+            info="Tracked real estate equity value for the current reporting period.",
         )
     with c7:
         render_kpi_card(
@@ -1232,7 +1425,7 @@ with tab_overview:
             gbp(surplus),
             color=CYAN if surplus >= 0 else RED,
             icon="↗" if surplus >= 0 else "↘",
-            info="Estimated monthly income left after expenses and monthly investment contributions.",
+            info="Monthly income remaining after expenses and investment contributions.",
         )
     with c8:
         render_kpi_card(
@@ -1240,7 +1433,7 @@ with tab_overview:
             pct_fmt(savings_rate),
             color=PURPLE,
             icon="◉",
-            info="Calculated as your total monthly investment contributions (cash + stocks) divided by your net monthly income.",
+            info="Monthly investment contributions (cash + stocks) as a percentage of net income.",
         )
     with c9:
         render_kpi_card(
@@ -1597,6 +1790,7 @@ with tab_portfolio:
             )
         if st.button("Save Target Allocation", key="save_ta"):
             st.session_state.target_alloc = {"cash": t_cash, "stocks": t_stocks, "crypto": t_crypto, "pension": t_pension, "real_estate": t_re}
+            _persist_all_settings()
             st.rerun()
     if total_portfolio > 0:
         ta = st.session_state.target_alloc
@@ -1917,6 +2111,7 @@ with tab_goals:
             goal_updates.append({"name": g_name_input, "target": g_target_input, "target_age": g_age_input})
         if st.button("Save Goals", key="save_goals"):
             st.session_state.custom_goals = goal_updates
+            _persist_all_settings()
             st.rerun()
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ASSUMPTIONS
@@ -1981,6 +2176,7 @@ with tab_cashflow:
             st.session_state.expense_discretionary = exp_disc
             st.session_state.expense_other = exp_other
             st.session_state.monthly_expenses = category_total
+            _persist_all_settings()
             st.rerun()
         if category_total > 0:
             st.markdown(
