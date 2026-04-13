@@ -1930,7 +1930,6 @@ with tab_pension:
         mode="lines+markers", name="Nominal",
         line=dict(color=PURPLE, width=3),
         marker=dict(size=5, color=PURPLE),
-        fill="tozeroy", fillcolor=f"{PURPLE}18",
         hovertemplate="Year %{x}<br>Nominal: £%{y:,.0f}<extra></extra>",
     ))
     fig_pen.add_trace(go.Scatter(
