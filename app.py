@@ -27,8 +27,8 @@ CARD_H = "#182240"
 BORDER = "#1E2A45"
 BORDER_L = "#253255"
 TEXT = "#FFFFFF"
-TEXT2 = "#C7D2E3"
-TEXT3 = "#E2E8F0"
+TEXT2 = "#D0DAE8"
+TEXT3 = "#E8EDF4"
 PURPLE = "#8B5CF6"
 BLUE = "#3B82F6"
 CYAN = "#06B6D4"
@@ -49,10 +49,10 @@ MONTHS = [
     "July", "August", "September", "October", "November", "December"
 ]
 LBL_CASH = "Cash Savings"
-LBL_STOCK = "Stock and Shares"
+LBL_STOCK = "Stocks & Shares"
 LBL_CRYPTO = "Crypto"
 LBL_PENSION = "Pension"
-LBL_RE = "Real Estate Equity"
+LBL_RE = "Property Equity"
 BOLD_WHITE = dict(color=TEXT, size=13, family="Inter, sans-serif")
 BOLD_WHITE_SM = dict(color=TEXT, size=11, family="Inter, sans-serif")
 GRID_AXIS = {"gridcolor": BORDER, "gridwidth": 1, "zeroline": False}
@@ -235,6 +235,7 @@ DEFAULT_SETTINGS = {
     "cash_interest_rate": 4.5,
     "expected_return": 12.0,
     "inflation": 2.5,
+    "pension_growth_rate": 5.0,
     "property_growth": 3.5,
     "selected_scenario": "Base",
     "bonus_month": "March",
@@ -938,12 +939,14 @@ def forecast_wealth(
     real_estate_growth,
     years,
     employer_pension_annual=0,
+    pension_return=None,
 ):
     rows = []
     cash_value = starting_cash
     invested_value = starting_invested
     pension_value = starting_pension
     real_estate_value = starting_real_estate_equity
+    _pension_return = pension_return if pension_return is not None else stock_return
     for year in range(0, years + 1):
         net_worth = cash_value + invested_value + pension_value + real_estate_value
         real_factor = 1 / ((1 + inflation / 100) ** year) if year > 0 else 1
@@ -959,7 +962,7 @@ def forecast_wealth(
         if year < years:
             cash_value *= (1 + cash_interest_rate / 100)
             invested_value *= (1 + stock_return / 100)
-            pension_value *= (1 + stock_return / 100)
+            pension_value *= (1 + _pension_return / 100)
             real_estate_value *= (1 + real_estate_growth / 100)
             cash_value += monthly_invest_cash * 12
             invested_value += monthly_invest_stocks * 12
@@ -1007,10 +1010,10 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
     cash = money_text_input("Cash Savings (£)", existing_snapshot.get("cash", 25_000), f"cash_snapshot_{period_key}")
-    investments = money_text_input("Stock and Shares (£)", existing_snapshot.get("investments", 85_000), f"investments_snapshot_{period_key}")
+    investments = money_text_input("Stocks & Shares (£)", existing_snapshot.get("investments", 85_000), f"investments_snapshot_{period_key}")
     crypto = money_text_input("Crypto (£)", existing_snapshot.get("crypto", 0), f"crypto_snapshot_{period_key}")
     pension_val = money_text_input("Pension (£)", existing_snapshot.get("pension", 42_000), f"pension_snapshot_{period_key}")
-    real_estate_equity = money_text_input("Real Estate Equity Value (£)", existing_snapshot.get("real_estate_equity", 130_000), f"real_estate_equity_snapshot_{period_key}")
+    real_estate_equity = money_text_input("Property Equity (£)", existing_snapshot.get("real_estate_equity", 130_000), f"real_estate_equity_snapshot_{period_key}")
     if st.button("Save Monthly Input", use_container_width=True):
         snapshot_data = {
             "cash": cash,
@@ -1119,10 +1122,12 @@ with st.sidebar:
         )
         draft_cash_interest_rate = st.slider("Cash Interest Rate %", 0.0, 10.0, float(st.session_state.cash_interest_rate), 0.1,
                                               help="Annual interest rate on cash savings (e.g. savings account / cash ISA)")
-        draft_expected_return = st.slider("Stock & Shares Expected Return %", 0.0, 15.0, float(st.session_state.expected_return), 0.5,
-                                           help="Annual expected return on stock investments, crypto, and pension")
+        draft_expected_return = st.slider("Stocks & Shares Return %", 0.0, 15.0, float(st.session_state.expected_return), 0.5,
+                                           help="Annual expected return on stocks and crypto")
+        draft_pension_growth_rate = st.slider("Pension Growth Rate %", 0.0, 10.0, float(st.session_state.pension_growth_rate), 0.5,
+                                               help="Annual expected return on pension investments (often lower risk than stocks)")
         draft_inflation = st.slider("Inflation %", 0.0, 10.0, float(st.session_state.inflation), 0.1)
-        draft_property_growth = st.slider("Yearly Real Estate Growth %", 0.0, 10.0, float(st.session_state.property_growth), 0.5)
+        draft_property_growth = st.slider("Property Growth %", 0.0, 10.0, float(st.session_state.property_growth), 0.5)
         st.markdown(
             f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Planning & Goals</div>',
             unsafe_allow_html=True,
@@ -1148,6 +1153,7 @@ with st.sidebar:
         st.session_state.retirement_age = draft_retirement_age
         st.session_state.target_wealth = draft_target_wealth
         st.session_state.expected_return = draft_expected_return
+        st.session_state.pension_growth_rate = draft_pension_growth_rate
         st.session_state.inflation = draft_inflation
         st.session_state.property_growth = draft_property_growth
         _persist_all_settings()
@@ -1174,6 +1180,7 @@ retirement_age = st.session_state.retirement_age
 target_wealth = st.session_state.target_wealth
 cash_interest_rate = st.session_state.cash_interest_rate
 expected_return = st.session_state.expected_return
+pension_growth_rate = st.session_state.pension_growth_rate
 inflation = st.session_state.inflation
 property_growth = st.session_state.property_growth
 selected_scenario = st.session_state.selected_scenario
@@ -1214,6 +1221,7 @@ df_con = forecast_wealth(
     real_estate_growth=property_growth,
     years=years_to_retire,
     employer_pension_annual=employer_pension_annual,
+    pension_return=pension_growth_rate,
 )
 df_base = forecast_wealth(
     starting_cash=cash,
@@ -1229,6 +1237,7 @@ df_base = forecast_wealth(
     real_estate_growth=property_growth,
     years=years_to_retire,
     employer_pension_annual=employer_pension_annual,
+    pension_return=pension_growth_rate,
 )
 df_agg = forecast_wealth(
     starting_cash=cash,
@@ -1244,6 +1253,7 @@ df_agg = forecast_wealth(
     real_estate_growth=property_growth,
     years=years_to_retire,
     employer_pension_annual=employer_pension_annual,
+    pension_return=pension_growth_rate,
 )
 scenario_map = {
     "Conservative": (df_con, max(0, expected_return - 2)),
@@ -1363,7 +1373,7 @@ with st.expander("Getting Started — How to Use This Dashboard", expanded=False
 <div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;border-bottom:1px solid {BORDER};">
 <div style="min-width:32px;height:32px;border-radius:8px;background:{PURPLE}22;border:1px solid {PURPLE}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{PURPLE};flex-shrink:0;">1</div>
 <div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Save Monthly Snapshots</div>
-<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;">Use the <b style="color:{WHITE}">first sidebar section</b> to enter the current value of each asset (Cash, Stocks, Crypto, Pension, Real Estate) for a specific month. Click <b style="color:{WHITE}">Save Monthly Input</b> to record it.</div></div></div>
+<div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;">Use the <b style="color:{WHITE}">first sidebar section</b> to enter the current value of each asset (Cash, Stocks, Crypto, Pension, Property) for a specific month. Click <b style="color:{WHITE}">Save Monthly Input</b> to record it.</div></div></div>
 <div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;border-bottom:1px solid {BORDER};">
 <div style="min-width:32px;height:32px;border-radius:8px;background:{CYAN}22;border:1px solid {CYAN}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{CYAN};flex-shrink:0;">2</div>
 <div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Set Your Assumptions</div>
@@ -1437,7 +1447,7 @@ with tab_overview:
             gbp(investments),
             color=BLUE,
             icon="△",
-            info=f"Current value of stock and shares ISA/GIA. Expected return: {pct_fmt(expected_return)} p.a.",
+            info=f"Current value of stocks & shares ISA/GIA. Expected return: {pct_fmt(expected_return)} p.a.",
         )
     with c4:
         render_kpi_card(
@@ -1463,7 +1473,7 @@ with tab_overview:
             gbp(real_estate_equity),
             color=PURPLE,
             icon="⬡",
-            info="Tracked real estate equity value for the current reporting period.",
+            info="Tracked property equity value for the current reporting period.",
         )
     with c7:
         render_kpi_card(
@@ -1894,6 +1904,7 @@ with tab_pension:
         inflation,
         0, max(years_to_retire, 1),
         employer_pension_annual,
+        pension_return=pension_growth_rate,
     )
     projected_pension = _pension_forecast_df.iloc[-1]["pension"] if len(_pension_forecast_df) > 0 else pension_val
     # ── Section A: Summary KPIs ──
@@ -1901,7 +1912,7 @@ with tab_pension:
     pa1.markdown(kpi_html("Current Pension Value", gbp(pension_val), PURPLE, "◎",
                           info="Latest recorded pension balance from your most recent snapshot."), unsafe_allow_html=True)
     pa2.markdown(kpi_html("Projected @ Retirement", gbp(projected_pension), GREEN, "⟩",
-                          info=f"Estimated pension value at age {retirement_age}, assuming {pct_fmt(expected_return)} annual growth and current contributions."), unsafe_allow_html=True)
+                          info=f"Estimated pension value at age {retirement_age}, assuming {pct_fmt(pension_growth_rate)} annual growth and current contributions."), unsafe_allow_html=True)
     pa3.markdown(kpi_html("Years to Retirement", str(years_to_retire), AMBER, "◷",
                           info=f"Age {current_age} now, retiring at {retirement_age}."), unsafe_allow_html=True)
     spacer(".5rem")
@@ -2005,7 +2016,7 @@ with tab_pension:
         st.markdown(row_item("Employee Contribution Rate", pct_fmt(pension_contrib_pct)), unsafe_allow_html=True)
         st.markdown(row_item("Employer Contribution Rate", pct_fmt(employer_pension_contrib_pct)), unsafe_allow_html=True)
         st.markdown(row_item("Gross Salary (basis)", gbp(gross_salary)), unsafe_allow_html=True)
-        st.markdown(row_item("Expected Growth Rate", pct_fmt(expected_return)), unsafe_allow_html=True)
+        st.markdown(row_item("Pension Growth Rate", pct_fmt(pension_growth_rate)), unsafe_allow_html=True)
         st.markdown(row_item("Inflation Assumption", pct_fmt(inflation)), unsafe_allow_html=True)
         st.markdown(row_item("Retirement Age", str(retirement_age)), unsafe_allow_html=True)
         st.markdown(row_item("Years to Retirement", str(years_to_retire)), unsafe_allow_html=True)
@@ -2271,6 +2282,7 @@ with tab_forecast:
                 real_estate_growth=property_growth,
                 years=wi_total_years,
                 employer_pension_annual=employer_pension_annual,
+                pension_return=pension_growth_rate,
             )
             wi_final = df_whatif.iloc[-1]["net_worth"]
             base_final = selected_df.iloc[-1]["net_worth"]
@@ -2405,9 +2417,10 @@ with tab_assumptions:
     st.markdown(card_open("Parameters"), unsafe_allow_html=True)
     for label, value, desc, color in [
         ("Cash Interest Rate", pct_fmt(cash_interest_rate), "Annual interest rate applied to cash savings growth", CYAN),
-        ("Stock & Shares Expected Return", pct_fmt(expected_return), "Annual nominal return used for stock, crypto, and pension growth", BLUE),
+        ("Stocks & Shares Return", pct_fmt(expected_return), "Annual nominal return used for stocks and crypto growth", BLUE),
+        ("Pension Growth Rate", pct_fmt(pension_growth_rate), "Annual expected return on pension investments", GREEN),
         ("Inflation Rate", pct_fmt(inflation), "Used to calculate real purchasing-power values", AMBER),
-        ("Yearly Real Estate Growth %", pct_fmt(property_growth), "Annual growth assumption for real estate equity", PURPLE),
+        ("Property Growth", pct_fmt(property_growth), "Annual growth assumption for property equity", PURPLE),
         ("Employee Pension Contribution", pct_fmt(pension_contrib_pct), "Your personal pension contribution rate", BLUE),
         ("Employer Pension Contribution", pct_fmt(employer_pension_contrib_pct), "Your employer's pension contribution rate", CYAN),
         ("Tax Region", region, "Selected tax jurisdiction", AMBER),
@@ -2739,10 +2752,10 @@ report_lines = [
     "-" * 40,
     f"  Net Worth:            {gbp(net_worth)}",
     f"  Cash Savings:         {gbp(cash)}",
-    f"  Stock & Shares:       {gbp(investments)}",
+    f"  Stocks & Shares:      {gbp(investments)}",
     f"  Crypto:               {gbp(crypto)}",
     f"  Pension:              {gbp(pension_val)}",
-    f"  Real Estate Equity:   {gbp(real_estate_equity)}",
+    f"  Property Equity:      {gbp(real_estate_equity)}",
     "",
     "INCOME & CASH FLOW",
     "-" * 40,
@@ -2761,6 +2774,7 @@ report_lines = [
     f"  Selected Scenario:    {selected_scenario}",
     f"  Cash Interest Rate:   {pct_fmt(cash_interest_rate)}",
     f"  Stock Return:         {pct_fmt(selected_return)}",
+    f"  Pension Growth Rate:  {pct_fmt(pension_growth_rate)}",
     f"  Inflation:            {pct_fmt(inflation)}",
     f"  Years to Retirement:  {years_to_retire}",
     f"  10-Year Forecast:     {gbp(forecast_10_year_value)}",
