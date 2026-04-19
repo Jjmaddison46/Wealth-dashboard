@@ -2098,6 +2098,104 @@ with tab_forecast:
     }))
     st.plotly_chart(fig, use_container_width=True, config=PLT_CFG)
     st.markdown(card_close(), unsafe_allow_html=True)
+    # ── Asset Class Breakdown Chart ──
+    spacer("1rem")
+    st.markdown(card_open("Forecast by Asset Class", f"{scenario_choice} scenario — how each asset grows over time"), unsafe_allow_html=True)
+    _fc_view = st.radio("View", ["Stacked Area", "Individual Lines"], horizontal=True, label_visibility="collapsed", key="fc_view")
+    if _fc_view == "Stacked Area":
+        fig_ac = go.Figure()
+        fig_ac.add_trace(go.Scatter(
+            x=selected_df["year"], y=selected_df["cash"],
+            name=LBL_CASH, mode="lines", stackgroup="one",
+            line=dict(width=0.5, color=CYAN),
+            hovertemplate="Year %{x}<br>Cash: £%{y:,.0f}<extra></extra>",
+        ))
+        fig_ac.add_trace(go.Scatter(
+            x=selected_df["year"], y=selected_df["invested"],
+            name=LBL_STOCK, mode="lines", stackgroup="one",
+            line=dict(width=0.5, color=BLUE),
+            hovertemplate="Year %{x}<br>Stocks: £%{y:,.0f}<extra></extra>",
+        ))
+        fig_ac.add_trace(go.Scatter(
+            x=selected_df["year"], y=selected_df["pension"],
+            name=LBL_PENSION, mode="lines", stackgroup="one",
+            line=dict(width=0.5, color=GREEN),
+            hovertemplate="Year %{x}<br>Pension: £%{y:,.0f}<extra></extra>",
+        ))
+        fig_ac.add_trace(go.Scatter(
+            x=selected_df["year"], y=selected_df["real_estate_equity"],
+            name=LBL_RE, mode="lines", stackgroup="one",
+            line=dict(width=0.5, color=PURPLE),
+            hovertemplate="Year %{x}<br>Property: £%{y:,.0f}<extra></extra>",
+        ))
+    else:
+        fig_ac = go.Figure()
+        for col, label, color in [
+            ("cash", LBL_CASH, CYAN),
+            ("invested", LBL_STOCK, BLUE),
+            ("pension", LBL_PENSION, GREEN),
+            ("real_estate_equity", LBL_RE, PURPLE),
+        ]:
+            fig_ac.add_trace(go.Scatter(
+                x=selected_df["year"], y=selected_df[col],
+                name=label, mode="lines+markers",
+                line=dict(color=color, width=2.5),
+                marker=dict(size=4, color=color),
+                hovertemplate=f"Year %{{x}}<br>{label}: £%{{y:,.0f}}<extra></extra>",
+            ))
+        fig_ac.add_trace(go.Scatter(
+            x=selected_df["year"], y=selected_df["net_worth"],
+            name="Total Net Worth", mode="lines",
+            line=dict(color=WHITE, width=2, dash="dot"),
+            hovertemplate="Year %{x}<br>Total: £%{y:,.0f}<extra></extra>",
+        ))
+    fig_ac.update_layout(**make_layout({
+        "height": 420,
+        "legend": dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(size=11, color=TEXT2), bgcolor="rgba(0,0,0,0)"),
+        "xaxis": {**GRID_AXIS, "title": {"text": "Years", "font": dict(color=TEXT3, size=11)}},
+        "yaxis": {**GRID_AXIS, "title": {"text": "Value (£)", "font": dict(color=TEXT3, size=11)}},
+    }))
+    st.plotly_chart(fig_ac, use_container_width=True, config=PLT_CFG)
+    # ── Asset class milestone table ──
+    _fc_milestones = sorted(set([y for y in [1, 5, 10, years_to_retire] if y <= years_to_retire]))
+    _fc_table = f'<div style="overflow-x:auto;margin-top:.6rem;"><table style="width:100%;border-collapse:collapse;font-size:.82rem;"><thead><tr style="border-bottom:2px solid {BORDER};">'
+    _fc_table += f'<th style="text-align:left;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Year</th>'
+    _fc_table += f'<th style="text-align:right;padding:.5rem .6rem;color:{CYAN};font-weight:700;">Cash</th>'
+    _fc_table += f'<th style="text-align:right;padding:.5rem .6rem;color:{BLUE};font-weight:700;">Stocks</th>'
+    _fc_table += f'<th style="text-align:right;padding:.5rem .6rem;color:{GREEN};font-weight:700;">Pension</th>'
+    _fc_table += f'<th style="text-align:right;padding:.5rem .6rem;color:{PURPLE};font-weight:700;">Property</th>'
+    _fc_table += f'<th style="text-align:right;padding:.5rem .6rem;color:{TEXT};font-weight:700;">Total</th>'
+    _fc_table += '</tr></thead><tbody>'
+    for yr in _fc_milestones:
+        _row = selected_df.loc[selected_df["year"] == yr]
+        if len(_row) > 0:
+            _r = _row.iloc[0]
+            _fc_table += f'<tr style="border-bottom:1px solid {BORDER};">'
+            _fc_table += f'<td style="padding:.45rem .6rem;color:{TEXT};font-weight:600;">Year {yr}</td>'
+            _fc_table += f'<td style="padding:.45rem .6rem;color:{CYAN};text-align:right;">{gbp(_r["cash"])}</td>'
+            _fc_table += f'<td style="padding:.45rem .6rem;color:{BLUE};text-align:right;">{gbp(_r["invested"])}</td>'
+            _fc_table += f'<td style="padding:.45rem .6rem;color:{GREEN};text-align:right;">{gbp(_r["pension"])}</td>'
+            _fc_table += f'<td style="padding:.45rem .6rem;color:{PURPLE};text-align:right;">{gbp(_r["real_estate_equity"])}</td>'
+            _fc_table += f'<td style="padding:.45rem .6rem;color:{TEXT};text-align:right;font-weight:700;">{gbp(_r["net_worth"])}</td>'
+            _fc_table += '</tr>'
+    _fc_table += '</tbody></table></div>'
+    st.markdown(_fc_table, unsafe_allow_html=True)
+    st.markdown(card_close(), unsafe_allow_html=True)
+    # ── Growth Attribution ──
+    spacer(".5rem")
+    _fc_final = selected_df.iloc[-1]
+    _fc_start_total = net_worth
+    _fc_end_total = _fc_final["net_worth"]
+    _fc_total_growth = _fc_end_total - _fc_start_total
+    _fc_cash_growth = _fc_final["cash"] - cash
+    _fc_invest_growth = _fc_final["invested"] - (investments + crypto)
+    _fc_pension_growth = _fc_final["pension"] - pension_val
+    _fc_re_growth = _fc_final["real_estate_equity"] - real_estate_equity
+    ga1, ga2, ga3, ga4 = st.columns(4)
+    ga1.markdown(kpi_small("Cash Growth", gbp(_fc_cash_growth), CYAN), unsafe_allow_html=True)
+    ga2.markdown(kpi_small("Investment Growth", gbp(_fc_invest_growth), BLUE), unsafe_allow_html=True)
+    ga3.markdown(kpi_small("Pension Growth", gbp(_fc_pension_growth), GREEN), unsafe_allow_html=True)
+    ga4.markdown(kpi_small("Property Growth", gbp(_fc_re_growth), PURPLE), unsafe_allow_html=True)
     spacer(".5rem")
     left, right = st.columns(2)
     with left:
