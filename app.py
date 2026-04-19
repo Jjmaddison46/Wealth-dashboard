@@ -27,8 +27,8 @@ CARD_H = "#182240"
 BORDER = "#1E2A45"
 BORDER_L = "#253255"
 TEXT = "#FFFFFF"
-TEXT2 = "#D0DAE8"
-TEXT3 = "#E8EDF4"
+TEXT2 = "#E0E7F1"
+TEXT3 = "#F0F3F8"
 PURPLE = "#8B5CF6"
 BLUE = "#3B82F6"
 CYAN = "#06B6D4"
@@ -38,8 +38,8 @@ AMBER = "#F59E0B"
 YELLOW = "#FFD60A"
 DEEP_YELLOW = "#E8A308"
 # Unified accent for sliders & interactive controls
-SLIDER_CLR = "#7C3AED"
-SLIDER_CLR2 = "#6D28D9"
+SLIDER_CLR = "#E8A308"
+SLIDER_CLR2 = "#D4950A"
 WHITE = "#FFFFFF"
 BLACK = "#000000"
 SHADOW = "0 4px 24px rgba(0,0,0,.35), 0 1px 4px rgba(0,0,0,.25)"
@@ -398,7 +398,7 @@ section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
     outline: none !important;
     box-shadow: none !important;
 }}
-/* ── SLIDER STYLING — purple accent to match palette ── */
+/* ── SLIDER STYLING — deep yellow/orange accent ── */
 .stSlider > div {{
     padding-top: .15rem;
 }}
@@ -414,18 +414,18 @@ section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
 }}
 /* Background (unfilled) track */
 .stSlider [data-baseweb="slider"] > div > div:first-child {{
-    background: rgba(139, 92, 246, 0.15) !important;
+    background: rgba(232, 163, 8, 0.15) !important;
 }}
-/* Active (filled) track — purple gradient */
+/* Active (filled) track — deep yellow/orange gradient */
 .stSlider [data-baseweb="slider"] > div > div:nth-child(2) {{
-    background: linear-gradient(90deg, {SLIDER_CLR} 0%, {PURPLE} 100%) !important;
+    background: linear-gradient(90deg, {SLIDER_CLR2} 0%, {SLIDER_CLR} 100%) !important;
     opacity: 1 !important;
 }}
 /* Thumb */
 .stSlider [role="slider"] {{
     background: #FFFFFF !important;
-    border: 3px solid {PURPLE} !important;
-    box-shadow: 0 0 0 4px rgba(139,92,246,.22), 0 1px 4px rgba(0,0,0,.3) !important;
+    border: 3px solid {DEEP_YELLOW} !important;
+    box-shadow: 0 0 0 4px rgba(232,163,8,.22), 0 1px 4px rgba(0,0,0,.3) !important;
 }}
 /* Slider text colors */
 .stSlider label,
@@ -444,7 +444,7 @@ section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
 /* ── UNIFIED BUTTON STYLING — all buttons share same base ── */
 .stButton > button,
 [data-testid="stFormSubmitButton"] > button {{
-    background: linear-gradient(135deg, {PURPLE} 0%, {BLUE} 100%) !important;
+    background: linear-gradient(135deg, {BLUE} 0%, {CYAN} 100%) !important;
     color: {WHITE} !important;
     border: none !important;
     border-radius: 12px !important;
@@ -452,15 +452,15 @@ section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
     font-size: .86rem !important;
     letter-spacing: .02em !important;
     padding: .6rem 1.2rem !important;
-    box-shadow: 0 2px 10px rgba(139,92,246,.3), 0 1px 3px rgba(0,0,0,.2) !important;
+    box-shadow: 0 2px 10px rgba(59,130,246,.3), 0 1px 3px rgba(0,0,0,.2) !important;
     transition: all .2s cubic-bezier(.4,0,.2,1) !important;
     cursor: pointer !important;
 }}
 .stButton > button:hover,
 [data-testid="stFormSubmitButton"] > button:hover {{
-    background: linear-gradient(135deg, #9D6FFF 0%, #5B9BFF 100%) !important;
+    background: linear-gradient(135deg, #5B9BFF 0%, #22D3EE 100%) !important;
     color: {WHITE} !important;
-    box-shadow: 0 6px 20px rgba(139,92,246,.4), 0 2px 6px rgba(0,0,0,.25) !important;
+    box-shadow: 0 6px 20px rgba(59,130,246,.4), 0 2px 6px rgba(0,0,0,.25) !important;
     transform: translateY(-2px) !important;
 }}
 .stButton > button:active,
@@ -476,8 +476,8 @@ section[data-testid="stSidebar"] [data-baseweb="select"] svg {{
 }}
 .stDownloadButton > button:hover {{
     background: {CARD} !important;
-    border-color: {PURPLE}88 !important;
-    box-shadow: 0 4px 14px rgba(139,92,246,.25) !important;
+    border-color: {BLUE}88 !important;
+    box-shadow: 0 4px 14px rgba(59,130,246,.25) !important;
 }}
 div[data-testid="stMetric"] {{
     display: none;
@@ -505,12 +505,12 @@ div[data-testid="stMetric"] {{
 }}
 .stTabs [data-baseweb="tab"]:hover {{
     color: {WHITE} !important;
-    background: rgba(139,92,246,.08) !important;
+    background: rgba(59,130,246,.08) !important;
 }}
 .stTabs [aria-selected="true"] {{
     color: {WHITE} !important;
-    background: linear-gradient(180deg, rgba(139,92,246,.12) 0%, transparent 100%) !important;
-    border-bottom: 2px solid {PURPLE} !important;
+    background: linear-gradient(180deg, rgba(59,130,246,.12) 0%, transparent 100%) !important;
+    border-bottom: 2px solid {BLUE} !important;
     font-weight: 700;
 }}
 .stTabs [data-baseweb="tab-highlight"],
@@ -528,7 +528,7 @@ div[data-testid="stMetric"] {{
     transition: all .2s ease !important;
 }}
 .streamlit-expanderHeader:hover {{
-    border-color: {PURPLE}66 !important;
+    border-color: {BORDER_L} !important;
     background: {CARD_H} !important;
 }}
 .streamlit-expanderContent {{
@@ -564,7 +564,7 @@ details[data-testid="stExpander"] > div {{
     border-radius: 3px;
 }}
 ::-webkit-scrollbar-thumb:hover {{
-    background: {PURPLE}66;
+    background: {BORDER_L};
 }}
 /* ── Global transition for all interactive elements ── */
 input, select, textarea, button, [role="slider"], [data-baseweb="select"] > div {{
@@ -572,8 +572,8 @@ input, select, textarea, button, [role="slider"], [data-baseweb="select"] > div 
 }}
 /* ── Inputs focus glow ── */
 section[data-testid="stSidebar"] input:focus {{
-    border-color: {PURPLE}88 !important;
-    box-shadow: 0 0 0 3px rgba(139,92,246,.15) !important;
+    border-color: {BORDER_L} !important;
+    box-shadow: 0 0 0 3px rgba(37,50,85,.35) !important;
 }}
 /* ── Radio buttons / toggles styling ── */
 .stRadio [role="radiogroup"] label {{
@@ -614,11 +614,11 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] > div > div > d
     width:34px;
     height:34px;
     border-radius:9px;
-    background:linear-gradient(135deg,{PURPLE},{BLUE});
+    background:linear-gradient(135deg,{BLUE},{CYAN});
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow:0 2px 10px rgba(139,92,246,.25);
+    box-shadow:0 2px 10px rgba(59,130,246,.25);
     flex-shrink:0;
 }}
 .wv-logo-icon svg {{
@@ -634,7 +634,7 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] > div > div > d
     display:inline-block;
 }}
 .wealthview-title span {{
-    background:linear-gradient(135deg,{PURPLE},{CYAN});
+    background:linear-gradient(135deg,{BLUE},{CYAN});
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
 }}
@@ -725,7 +725,7 @@ def money_text_input(label, value, key, help_text=None):
     formatted_default = f"{int(value):,}" if value is not None else "0"
     raw_value = st.text_input(label, value=formatted_default, key=key, help=help_text)
     return parse_money_input(raw_value, value if value is not None else 0)
-def kpi_html(label, value, color=PURPLE, icon="", sub="", info=""):
+def kpi_html(label, value, color=BLUE, icon="", sub="", info=""):
     sub_html = f'<div style="color:{TEXT3};font-size:.7rem;margin-top:.18rem;">{sub}</div>' if sub else ""
     icon_html = f'<span style="font-size:.95rem;margin-right:.25rem;">{icon}</span>' if icon else ""
     info_html = ""
@@ -751,7 +751,7 @@ def kpi_html(label, value, color=PURPLE, icon="", sub="", info=""):
         f'{info_html}'
         f'</div>'
     )
-def render_kpi_card(label, value, color=PURPLE, icon="", sub="", info=""):
+def render_kpi_card(label, value, color=BLUE, icon="", sub="", info=""):
     st.markdown(
         kpi_html(label, value, color=color, icon=icon, sub=sub, info=info),
         unsafe_allow_html=True,
@@ -774,7 +774,7 @@ def sidebar_label(label, color=WHITE):
 def row_item(label, value, color=TEXT, bold=False):
     fw = "700" if bold else "500"
     return f'<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid {BORDER}08;"><span style="color:{TEXT2};font-size:.84rem;">{label}</span><span style="color:{color};font-weight:{fw};font-size:.9rem;">{value}</span></div>'
-def progress_bar_html(pct_val, color_from=PURPLE, color_to=CYAN, height=8):
+def progress_bar_html(pct_val, color_from=BLUE, color_to=CYAN, height=8):
     w = max(0, min(100, pct_val))
     return f'<div style="background:{BORDER};border-radius:{height}px;height:{height}px;width:100%;margin-top:.3rem;overflow:hidden;"><div style="width:{w}%;height:100%;border-radius:{height}px;background:linear-gradient(90deg,{color_from},{color_to});transition:width .6s ease;"></div></div>'
 def spacer(h="1rem"):
@@ -975,14 +975,14 @@ with st.sidebar:
     st.markdown(
         f"""
         <div style="text-align:center;padding:1rem 0 .6rem 0;">
-            <div style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,{PURPLE},{BLUE});box-shadow:0 2px 10px rgba(139,92,246,.25);margin-bottom:.45rem;">
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,{BLUE},{CYAN});box-shadow:0 2px 10px rgba(59,130,246,.25);margin-bottom:.45rem;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 17L9 11L13 15L21 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M17 7H21V11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
-            <div style="font-size:1.4rem;font-weight:800;letter-spacing:-.04em;"><span style="background:linear-gradient(135deg,{PURPLE},{CYAN});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Wealth</span><span style="color:{TEXT};">View</span></div>
-            <div style="color:{TEXT3};font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.2rem;">Wealth Management</div>
+            <div style="font-size:1.4rem;font-weight:800;letter-spacing:-.04em;"><span style="background:linear-gradient(135deg,{BLUE},{CYAN});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Wealth</span><span style="color:{TEXT};">View</span></div>
+            <div style="color:{TEXT2};font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.2rem;">Wealth Management</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -991,7 +991,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown(sidebar_label("Monthly Snapshot Inputs"), unsafe_allow_html=True)
     st.markdown(
-        f'<div style="background:{PURPLE}12;border:1px solid {PURPLE}33;border-radius:10px;padding:.55rem .75rem;margin-bottom:.6rem;">'
+        f'<div style="background:{CARD};border:1px solid {BORDER_L};border-radius:10px;padding:.55rem .75rem;margin-bottom:.6rem;">'
         f'<span style="color:{TEXT2};font-size:.76rem;">Enter the current value of each asset class for the selected month. '
         f'These values are saved as a monthly snapshot to track your wealth over time.</span></div>',
         unsafe_allow_html=True,
@@ -1077,7 +1077,7 @@ with st.sidebar:
                 unsafe_allow_html=True,
             )
     st.markdown("---")
-    st.markdown(sidebar_label("Employment, Contributions & Forecast Assumptions"), unsafe_allow_html=True)
+    st.markdown(sidebar_label("Forecast Assumptions"), unsafe_allow_html=True)
     st.markdown(
         f'<div style="background:{CYAN}12;border:1px solid {CYAN}33;border-radius:10px;padding:.55rem .75rem;margin-bottom:.6rem;">'
         f'<span style="color:{TEXT2};font-size:.76rem;">These settings control the salary calculator, cash flow analysis, and wealth forecasts. '
@@ -1086,7 +1086,7 @@ with st.sidebar:
     )
     with st.form("forecast_assumptions_form", clear_on_submit=False):
         st.markdown(
-            f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Employment Package</div>',
+            f'<div style="color:{TEXT2};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Employment Package</div>',
             unsafe_allow_html=True,
         )
         draft_gross_salary = money_text_input("Gross Salary (£/yr)", st.session_state.gross_salary, "gross_salary_input")
@@ -1103,13 +1103,13 @@ with st.sidebar:
                                               help_text="Freelance, consulting, or other annual side income")
         draft_scotland_tax = st.toggle("Scottish Tax Bands", value=st.session_state.scotland_tax)
         st.markdown(
-            f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Pension Contributions</div>',
+            f'<div style="color:{TEXT2};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Pension Contributions</div>',
             unsafe_allow_html=True,
         )
         draft_pension_contrib_pct = st.slider("Employee Contribution %", 0.0, 30.0, float(st.session_state.pension_contrib_pct), 0.5)
         draft_employer_pension_contrib_pct = st.slider("Employer Contribution %", 0.0, 30.0, float(st.session_state.employer_pension_contrib_pct), 0.5)
         st.markdown(
-            f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Monthly Investment Contributions</div>',
+            f'<div style="color:{TEXT2};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Monthly Investment Contributions</div>',
             unsafe_allow_html=True,
         )
         draft_monthly_invest_cash = money_text_input("Monthly Cash Savings (£)", st.session_state.monthly_invest_cash, "monthly_invest_cash_input",
@@ -1117,7 +1117,7 @@ with st.sidebar:
         draft_monthly_invest_stocks = money_text_input("Monthly Stock Investment (£)", st.session_state.monthly_invest_stocks, "monthly_invest_stocks_input",
                                                         help_text="Amount invested in stocks and shares each month")
         st.markdown(
-            f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Growth Rate Assumptions</div>',
+            f'<div style="color:{TEXT2};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Growth Rate Assumptions</div>',
             unsafe_allow_html=True,
         )
         draft_cash_interest_rate = st.slider("Cash Interest Rate %", 0.0, 10.0, float(st.session_state.cash_interest_rate), 0.1,
@@ -1129,13 +1129,13 @@ with st.sidebar:
         draft_inflation = st.slider("Inflation %", 0.0, 10.0, float(st.session_state.inflation), 0.1)
         draft_property_growth = st.slider("Property Growth %", 0.0, 10.0, float(st.session_state.property_growth), 0.5)
         st.markdown(
-            f'<div style="color:{PURPLE};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Planning & Goals</div>',
+            f'<div style="color:{TEXT2};font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin:.6rem 0 .3rem 0;">Planning & Goals</div>',
             unsafe_allow_html=True,
         )
         draft_current_age = st.number_input("Current Age", 18, 80, int(st.session_state.current_age))
         draft_retirement_age = st.number_input("Retirement Age", 30, 90, int(st.session_state.retirement_age))
         draft_target_wealth = money_text_input("Target Wealth (£)", st.session_state.target_wealth, "target_wealth_input")
-        forecast_submit = st.form_submit_button("Update Forecast Assumptions", use_container_width=True)
+        forecast_submit = st.form_submit_button("Save Assumptions", use_container_width=True)
     if forecast_submit:
         st.session_state.gross_salary = draft_gross_salary
         st.session_state.annual_bonus = draft_annual_bonus
@@ -1371,7 +1371,7 @@ with st.expander("Getting Started — How to Use This Dashboard", expanded=False
 <div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:14px;padding:1.2rem 1.4rem;">
 <div style="color:{TEXT};font-size:.95rem;font-weight:600;margin-bottom:.6rem;">Quick Start Guide</div>
 <div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;border-bottom:1px solid {BORDER};">
-<div style="min-width:32px;height:32px;border-radius:8px;background:{PURPLE}22;border:1px solid {PURPLE}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{PURPLE};flex-shrink:0;">1</div>
+<div style="min-width:32px;height:32px;border-radius:8px;background:{BLUE}22;border:1px solid {BLUE}44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:{BLUE};flex-shrink:0;">1</div>
 <div><div style="color:{TEXT};font-weight:600;font-size:.88rem;">Save Monthly Snapshots</div>
 <div style="color:{TEXT2};font-size:.8rem;line-height:1.6;margin-top:.15rem;">Use the <b style="color:{WHITE}">first sidebar section</b> to enter the current value of each asset (Cash, Stocks, Crypto, Pension, Property) for a specific month. Click <b style="color:{WHITE}">Save Monthly Input</b> to record it.</div></div></div>
 <div style="display:flex;gap:1rem;align-items:flex-start;padding:.75rem 0;border-bottom:1px solid {BORDER};">
@@ -2245,7 +2245,7 @@ with tab_forecast:
             st.markdown(row_item("Years to Target", "Not reached", RED, True), unsafe_allow_html=True)
         guidance_gap = max(0, required_monthly - monthly_invest)
         guidance_text = f"Increase monthly investing by about {gbp(guidance_gap)}/mo to improve your path to target." if guidance_gap > 0 else "Your current monthly investment level is already aligned with this scenario."
-        st.markdown(f'<div style="margin-top:.8rem;padding:.7rem .9rem;background:{PURPLE}10;border:1px solid {PURPLE}22;border-radius:10px;color:{TEXT2};font-size:.82rem;line-height:1.55;">{guidance_text}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="margin-top:.8rem;padding:.7rem .9rem;background:{CARD};border:1px solid {BORDER_L};border-radius:10px;color:{TEXT2};font-size:.82rem;line-height:1.55;">{guidance_text}</div>', unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
     # ── What-If Scenario Playground ──
     spacer("1rem")
@@ -2335,8 +2335,8 @@ with tab_goals:
         st.markdown(
             f"""<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.3rem;">
             <span style="color:{TEXT2};font-size:.82rem;">Progress toward target</span>
-            <span style="font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,{PURPLE},{CYAN});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">{pct_fmt(goal_progress)}</span></div>
-            {progress_bar_html(goal_progress, PURPLE, CYAN, 10)}
+            <span style="font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,{BLUE},{CYAN});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">{pct_fmt(goal_progress)}</span></div>
+            {progress_bar_html(goal_progress, BLUE, CYAN, 10)}
             <div style="display:flex;justify-content:space-between;margin-top:1rem;">
             <div><div style="color:{TEXT3};font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;">Current</div><div style="color:{TEXT};font-weight:700;font-size:1.05rem;margin-top:.15rem;">{gbp(net_worth)}</div></div>
             <div style="text-align:right;"><div style="color:{TEXT3};font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;">Target</div><div style="color:{GREEN};font-weight:700;font-size:1.05rem;margin-top:.15rem;">{gbp(target_wealth)}</div></div></div>""",
@@ -2582,7 +2582,7 @@ with tab_cashflow:
 with tab_salary:
     st.markdown(
         f"""<div style="display:flex;align-items:baseline;gap:.6rem;margin:1rem 0 .5rem 0;">
-        <span style="font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,{PURPLE},{BLUE});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">UK Salary Calculator</span>
+        <span style="font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,{BLUE},{CYAN});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">UK Salary Calculator</span>
         <span style="color:{TEXT2};font-size:.75rem;">{"Scotland" if scotland_tax else "England / Wales / NI"} · current assumptions</span></div>""",
         unsafe_allow_html=True,
     )
