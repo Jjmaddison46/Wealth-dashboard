@@ -1009,19 +1009,19 @@ with st.sidebar:
             f'<div style="background:{AMBER}12;border:1px solid {AMBER}33;border-radius:10px;padding:.55rem .75rem;margin-bottom:.6rem;"><span style="color:{AMBER};font-size:.78rem;font-weight:700;">Editing existing snapshot for {period_label}</span></div>',
             unsafe_allow_html=True,
         )
-    cash = money_text_input("Cash Savings (£)", existing_snapshot.get("cash", 25_000), f"cash_snapshot_{period_key}")
-    investments = money_text_input("Stocks & Shares (£)", existing_snapshot.get("investments", 85_000), f"investments_snapshot_{period_key}")
-    crypto = money_text_input("Crypto (£)", existing_snapshot.get("crypto", 0), f"crypto_snapshot_{period_key}")
-    pension_val = money_text_input("Pension (£)", existing_snapshot.get("pension", 42_000), f"pension_snapshot_{period_key}")
-    real_estate_equity = money_text_input("Property Equity (£)", existing_snapshot.get("real_estate_equity", 130_000), f"real_estate_equity_snapshot_{period_key}")
+    draft_cash = money_text_input("Cash Savings (£)", existing_snapshot.get("cash", 25_000), f"cash_snapshot_{period_key}")
+    draft_investments = money_text_input("Stocks & Shares (£)", existing_snapshot.get("investments", 85_000), f"investments_snapshot_{period_key}")
+    draft_crypto = money_text_input("Crypto (£)", existing_snapshot.get("crypto", 0), f"crypto_snapshot_{period_key}")
+    draft_pension_val = money_text_input("Pension (£)", existing_snapshot.get("pension", 42_000), f"pension_snapshot_{period_key}")
+    draft_real_estate_equity = money_text_input("Property Equity (£)", existing_snapshot.get("real_estate_equity", 130_000), f"real_estate_equity_snapshot_{period_key}")
     if st.button("Save Monthly Input", use_container_width=True):
         snapshot_data = {
-            "cash": cash,
-            "investments": investments,
-            "crypto": crypto,
-            "pension": pension_val,
-            "real_estate_equity": real_estate_equity,
-            "net_worth": cash + investments + crypto + pension_val + real_estate_equity,
+            "cash": draft_cash,
+            "investments": draft_investments,
+            "crypto": draft_crypto,
+            "pension": draft_pension_val,
+            "real_estate_equity": draft_real_estate_equity,
+            "net_worth": draft_cash + draft_investments + draft_crypto + draft_pension_val + draft_real_estate_equity,
             "saved_at": datetime.now().isoformat(),
         }
         if period_key in st.session_state.snapshots:
@@ -1059,14 +1059,14 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
     warnings = []
-    if cash == 0 and investments == 0 and crypto == 0 and pension_val == 0 and real_estate_equity == 0:
+    if draft_cash == 0 and draft_investments == 0 and draft_crypto == 0 and draft_pension_val == 0 and draft_real_estate_equity == 0:
         warnings.append("All monthly asset values are currently zero.")
     for label, value in [
-        (LBL_CASH, cash),
-        (LBL_STOCK, investments),
-        (LBL_CRYPTO, crypto),
-        (LBL_PENSION, pension_val),
-        (LBL_RE, real_estate_equity),
+        (LBL_CASH, draft_cash),
+        (LBL_STOCK, draft_investments),
+        (LBL_CRYPTO, draft_crypto),
+        (LBL_PENSION, draft_pension_val),
+        (LBL_RE, draft_real_estate_equity),
     ]:
         if value > 50_000_000:
             warnings.append(f"{label} looks unusually high.")
@@ -1158,6 +1158,25 @@ with st.sidebar:
         st.session_state.property_growth = draft_property_growth
         _persist_all_settings()
         st.rerun()
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# RESOLVE ACTIVE SNAPSHOT — only saved data drives calculations
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_has_saved_snapshots = bool(st.session_state.snapshots)
+if _has_saved_snapshots:
+    _latest_snap_key = sorted(st.session_state.snapshots.keys())[-1]
+    _active_snap = st.session_state.snapshots[_latest_snap_key]
+    cash = _active_snap.get("cash", 0)
+    investments = _active_snap.get("investments", 0)
+    crypto = _active_snap.get("crypto", 0)
+    pension_val = _active_snap.get("pension", 0)
+    real_estate_equity = _active_snap.get("real_estate_equity", 0)
+else:
+    # First-use fallback: use draft sidebar values until the user saves
+    cash = draft_cash
+    investments = draft_investments
+    crypto = draft_crypto
+    pension_val = draft_pension_val
+    real_estate_equity = draft_real_estate_equity
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # BUILD HISTORY & CURRENT CALCULATIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1610,10 +1629,19 @@ with tab_history:
         for col_name, label, color in traces:
             values = display_df[col_name]
             percentages = (values / totals * 100).fillna(0)
-            texts = [
-                f"{gbp(v)}<br>{p:.0f}%" if v > 0 and p >= 2 else ""
-                for v, p in zip(values, percentages)
-            ]
+            # Dynamic labels: large segments get value+%, medium get value only, small get nothing
+            texts = []
+            sizes = []
+            for v, p in zip(values, percentages):
+                if v > 0 and p >= 8:
+                    texts.append(f"{gbp(v)}<br>{p:.0f}%")
+                    sizes.append(11)
+                elif v > 0 and p >= 3:
+                    texts.append(gbp(v))
+                    sizes.append(10)
+                else:
+                    texts.append("")
+                    sizes.append(9)
             fig.add_trace(go.Bar(
                 x=display_df["x_label"],
                 y=values,
@@ -1621,10 +1649,10 @@ with tab_history:
                 marker=dict(color=color),
                 text=texts,
                 textposition="inside",
-                textfont=dict(color=TEXT, size=12, family="Inter"),
+                textfont=dict(color=TEXT, size=sizes, family="Inter"),
                 insidetextanchor="middle",
+                cliponaxis=False,
                 hovertemplate=f"<b>{label}</b><br>%{{x}}: £%{{y:,.0f}}<extra></extra>",
-                constraintext="none",
             ))
         fig.add_trace(go.Scatter(
             x=display_df["x_label"],
@@ -1641,7 +1669,7 @@ with tab_history:
         fig.update_layout(**make_layout({
             "height": 520,
             "barmode": "stack",
-            "uniformtext": dict(minsize=10, mode="show"),
+            "uniformtext": dict(minsize=8, mode="hide"),
             "legend": dict(
                 orientation="h",
                 y=-0.2,
