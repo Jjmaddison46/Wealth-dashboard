@@ -1651,6 +1651,7 @@ with tab_history:
                 textposition="inside",
                 textfont=dict(color=TEXT, size=sizes, family="Inter"),
                 insidetextanchor="middle",
+                constraintext="inside",
                 cliponaxis=False,
                 hovertemplate=f"<b>{label}</b><br>%{{x}}: £%{{y:,.0f}}<extra></extra>",
             ))
@@ -1669,7 +1670,6 @@ with tab_history:
         fig.update_layout(**make_layout({
             "height": 520,
             "barmode": "stack",
-            "uniformtext": dict(minsize=8, mode="hide"),
             "legend": dict(
                 orientation="h",
                 y=-0.2,
