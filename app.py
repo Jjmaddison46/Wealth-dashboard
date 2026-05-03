@@ -243,10 +243,15 @@ DEFAULT_SETTINGS = {
     "dividends_income": 0,
     "side_income": 0,
     "expense_housing": 0,
+    "expense_utilities": 0,
     "expense_transport": 0,
     "expense_food": 0,
+    "expense_dining": 0,
+    "expense_shopping": 0,
+    "expense_entertainment": 0,
     "expense_subscriptions": 0,
     "expense_discretionary": 0,
+    "expense_holidays": 0,
     "expense_other": 0,
 }
 # Load persisted settings (from Google Sheets or JSON) on first run
@@ -582,6 +587,27 @@ section[data-testid="stSidebar"] input:focus {{
 }}
 .stRadio [role="radiogroup"] label:hover {{
     color: {TEXT} !important;
+}}
+/* ── Main content input labels — ensure high contrast ── */
+.stTextInput label,
+.stNumberInput label,
+.stSelectbox label {{
+    color: {WHITE} !important;
+    font-weight: 600 !important;
+    font-size: .84rem !important;
+}}
+.stTextInput input {{
+    background: {CARD} !important;
+    border: 1px solid {BORDER_L} !important;
+    color: {TEXT} !important;
+    border-radius: 10px !important;
+    font-size: .92rem !important;
+}}
+.stNumberInput input {{
+    background: {CARD} !important;
+    border: 1px solid {BORDER_L} !important;
+    color: {TEXT} !important;
+    border-radius: 10px !important;
 }}
 div[data-testid="column"] > div {{
     padding: 0 .3rem;
@@ -2474,46 +2500,95 @@ with tab_assumptions:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab_cashflow:
     st.markdown(section_header("Monthly Cash Flow", "↔"), unsafe_allow_html=True)
-    # ── Expense Category Breakdown ──
-    with st.expander("Monthly Expenses Breakdown", expanded=False):
+    # ── Budget Planner ──
+    st.markdown(
+        f"""<div style="background:linear-gradient(135deg,{CARD} 0%,{CARD_H} 100%);border:1px solid {BORDER};border-radius:16px;padding:1.3rem 1.5rem;box-shadow:{SHADOW_SM};margin-bottom:1rem;">
+        <div style="color:{TEXT};font-size:1.05rem;font-weight:700;margin-bottom:.25rem;">Plan Your Monthly Budget</div>
+        <div style="color:{TEXT2};font-size:.82rem;line-height:1.55;">Set your monthly spending across key categories. This feeds directly into your cash flow and savings projections.</div></div>""",
+        unsafe_allow_html=True,
+    )
+    # ── 🏠 Essentials ──
+    st.markdown(
+        f'<div style="color:{TEXT};font-size:.9rem;font-weight:700;margin:.6rem 0 .4rem 0;padding-bottom:.3rem;border-bottom:1px solid {BORDER};">'
+        f'🏠 Essentials</div>',
+        unsafe_allow_html=True,
+    )
+    _ess_c1, _ess_c2 = st.columns(2)
+    with _ess_c1:
+        exp_housing = money_text_input("🏡 Housing (£/mo)", st.session_state.expense_housing, "exp_housing")
+        exp_food = money_text_input("🛒 Food & Groceries (£/mo)", st.session_state.expense_food, "exp_food")
+    with _ess_c2:
+        exp_utilities = money_text_input("⚡ Utilities (£/mo)", st.session_state.expense_utilities, "exp_utilities")
+        exp_transport = money_text_input("🚗 Transport (£/mo)", st.session_state.expense_transport, "exp_transport")
+    # ── 📦 Lifestyle ──
+    st.markdown(
+        f'<div style="color:{TEXT};font-size:.9rem;font-weight:700;margin:.8rem 0 .4rem 0;padding-bottom:.3rem;border-bottom:1px solid {BORDER};">'
+        f'📦 Lifestyle</div>',
+        unsafe_allow_html=True,
+    )
+    _lif_c1, _lif_c2 = st.columns(2)
+    with _lif_c1:
+        exp_dining = money_text_input("🍽 Dining & Eating Out (£/mo)", st.session_state.expense_dining, "exp_dining")
+        exp_entertainment = money_text_input("🎬 Entertainment (£/mo)", st.session_state.expense_entertainment, "exp_entertainment")
+    with _lif_c2:
+        exp_shopping = money_text_input("🛍 Shopping (£/mo)", st.session_state.expense_shopping, "exp_shopping")
+        exp_subs = money_text_input("🧾 Subscriptions (£/mo)", st.session_state.expense_subscriptions, "exp_subs")
+    # ── ✈️ Future & Flex ──
+    st.markdown(
+        f'<div style="color:{TEXT};font-size:.9rem;font-weight:700;margin:.8rem 0 .4rem 0;padding-bottom:.3rem;border-bottom:1px solid {BORDER};">'
+        f'✈️ Future & Flex</div>',
+        unsafe_allow_html=True,
+    )
+    _fut_c1, _fut_c2 = st.columns(2)
+    with _fut_c1:
+        exp_holidays = money_text_input("🌴 Holidays & Travel (£/mo)", st.session_state.expense_holidays, "exp_holidays")
+    with _fut_c2:
+        exp_other = money_text_input("💸 Misc / Other (£/mo)", st.session_state.expense_other, "exp_other")
+    # ── Category totals ──
+    _total_essentials = exp_housing + exp_utilities + exp_food + exp_transport
+    _total_lifestyle = exp_dining + exp_shopping + exp_entertainment + exp_subs
+    _total_future = exp_holidays + exp_other
+    category_total = _total_essentials + _total_lifestyle + _total_future
+    spacer(".6rem")
+    _tc1, _tc2, _tc3, _tc4 = st.columns(4)
+    _tc1.markdown(kpi_small("🏠 Essentials", gbp(_total_essentials), CYAN), unsafe_allow_html=True)
+    _tc2.markdown(kpi_small("📦 Lifestyle", gbp(_total_lifestyle), AMBER), unsafe_allow_html=True)
+    _tc3.markdown(kpi_small("✈️ Future & Flex", gbp(_total_future), BLUE), unsafe_allow_html=True)
+    _tc4.markdown(kpi_small("Total Expenses", gbp(category_total), RED if category_total > 0 else TEXT), unsafe_allow_html=True)
+    # ── Category % split ──
+    if category_total > 0:
+        _pct_ess = _total_essentials / category_total * 100
+        _pct_lif = _total_lifestyle / category_total * 100
+        _pct_fut = _total_future / category_total * 100
         st.markdown(
-            f'<div style="color:{TEXT2};font-size:.8rem;margin-bottom:.5rem;line-height:1.5;">'
-            f'Break down your monthly expenses by category for better visibility. '
-            f'The total automatically feeds into the cash flow calculations.</div>',
+            f'<div style="display:flex;gap:.5rem;margin:.5rem 0 .3rem 0;height:8px;border-radius:4px;overflow:hidden;">'
+            f'<div style="flex:{_pct_ess};background:{CYAN};border-radius:4px;" title="Essentials {_pct_ess:.0f}%"></div>'
+            f'<div style="flex:{_pct_lif};background:{AMBER};border-radius:4px;" title="Lifestyle {_pct_lif:.0f}%"></div>'
+            f'<div style="flex:{_pct_fut};background:{BLUE};border-radius:4px;" title="Future {_pct_fut:.0f}%"></div></div>'
+            f'<div style="display:flex;justify-content:space-between;margin-top:.25rem;">'
+            f'<span style="color:{CYAN};font-size:.7rem;font-weight:600;">Essentials {_pct_ess:.0f}%</span>'
+            f'<span style="color:{AMBER};font-size:.7rem;font-weight:600;">Lifestyle {_pct_lif:.0f}%</span>'
+            f'<span style="color:{BLUE};font-size:.7rem;font-weight:600;">Future {_pct_fut:.0f}%</span></div>',
             unsafe_allow_html=True,
         )
-        exp_c1, exp_c2, exp_c3 = st.columns(3)
-        with exp_c1:
-            exp_housing = money_text_input("Housing (£/mo)", st.session_state.expense_housing, "exp_housing")
-            exp_transport = money_text_input("Transport (£/mo)", st.session_state.expense_transport, "exp_transport")
-        with exp_c2:
-            exp_food = money_text_input("Food & Groceries (£/mo)", st.session_state.expense_food, "exp_food")
-            exp_subs = money_text_input("Subscriptions (£/mo)", st.session_state.expense_subscriptions, "exp_subs")
-        with exp_c3:
-            exp_disc = money_text_input("Discretionary (£/mo)", st.session_state.expense_discretionary, "exp_disc")
-            exp_other = money_text_input("Other (£/mo)", st.session_state.expense_other, "exp_other")
-        category_total = exp_housing + exp_transport + exp_food + exp_subs + exp_disc + exp_other
-        if st.button("Apply Expense Breakdown", key="apply_expenses"):
-            st.session_state.expense_housing = exp_housing
-            st.session_state.expense_transport = exp_transport
-            st.session_state.expense_food = exp_food
-            st.session_state.expense_subscriptions = exp_subs
-            st.session_state.expense_discretionary = exp_disc
-            st.session_state.expense_other = exp_other
-            st.session_state.monthly_expenses = category_total
-            _persist_all_settings()
-            st.rerun()
-        if category_total > 0:
-            st.markdown(
-                f'<div style="color:{TEXT};font-size:.85rem;font-weight:700;margin-top:.3rem;">Category Total: {gbp(category_total)}/mo</div>',
-                unsafe_allow_html=True,
-            )
-    cashflow_expenses = money_text_input("Monthly Expenses Total (£)", st.session_state.monthly_expenses, "monthly_expenses_cashflow")
-    if cashflow_expenses != st.session_state.monthly_expenses:
-        st.session_state.monthly_expenses = cashflow_expenses
-        monthly_expenses = cashflow_expenses
-        surplus = cashflow_net - monthly_expenses - monthly_invest
-        savings_rate = (monthly_invest / cashflow_net * 100) if cashflow_net > 0 else 0
+    spacer(".6rem")
+    if st.button("Update Monthly Budget", key="apply_expenses", use_container_width=True):
+        st.session_state.expense_housing = exp_housing
+        st.session_state.expense_utilities = exp_utilities
+        st.session_state.expense_transport = exp_transport
+        st.session_state.expense_food = exp_food
+        st.session_state.expense_dining = exp_dining
+        st.session_state.expense_shopping = exp_shopping
+        st.session_state.expense_entertainment = exp_entertainment
+        st.session_state.expense_subscriptions = exp_subs
+        st.session_state.expense_holidays = exp_holidays
+        st.session_state.expense_other = exp_other
+        st.session_state.expense_discretionary = 0  # migrated into sub-categories
+        st.session_state.monthly_expenses = category_total
+        _persist_all_settings()
+        st.rerun()
+    spacer("1rem")
+    # ── Cash Flow KPIs ──
     if annual_bonus > 0:
         st.markdown(
             f'<div style="background:{AMBER}12;border:1px solid {AMBER}33;border-radius:10px;padding:.6rem .85rem;margin-bottom:.7rem;">'
@@ -2525,7 +2600,7 @@ with tab_cashflow:
     c1, c2, c3 = st.columns(3)
     c1.markdown(kpi_small("Net Monthly Income", gbp(cashflow_net), GREEN), unsafe_allow_html=True)
     c2.markdown(kpi_small("Total Outflows", gbp(monthly_expenses + monthly_invest + monthly_pension_contrib), AMBER), unsafe_allow_html=True)
-    c3.markdown(kpi_small("Investment Rate", pct_fmt(savings_rate), PURPLE), unsafe_allow_html=True)
+    c3.markdown(kpi_small("Investment Rate", pct_fmt(savings_rate), CYAN), unsafe_allow_html=True)
     spacer(".8rem")
     left, right = st.columns(2)
     with left:
@@ -2575,29 +2650,34 @@ with tab_cashflow:
         st.markdown(card_close(), unsafe_allow_html=True)
     # ── Expense Category Breakdown Chart ──
     exp_cats = {
-        "Housing": st.session_state.expense_housing,
-        "Transport": st.session_state.expense_transport,
-        "Food": st.session_state.expense_food,
-        "Subscriptions": st.session_state.expense_subscriptions,
-        "Discretionary": st.session_state.expense_discretionary,
-        "Other": st.session_state.expense_other,
+        "🏡 Housing": st.session_state.expense_housing,
+        "⚡ Utilities": st.session_state.expense_utilities,
+        "🛒 Groceries": st.session_state.expense_food,
+        "🚗 Transport": st.session_state.expense_transport,
+        "🍽 Dining": st.session_state.expense_dining,
+        "🛍 Shopping": st.session_state.expense_shopping,
+        "🎬 Entertainment": st.session_state.expense_entertainment,
+        "🧾 Subscriptions": st.session_state.expense_subscriptions,
+        "🌴 Holidays": st.session_state.expense_holidays,
+        "💸 Other": st.session_state.expense_other,
     }
     active_cats = {k: v for k, v in exp_cats.items() if v > 0}
     if active_cats:
         spacer(".6rem")
         st.markdown(card_open("Expense Category Breakdown"), unsafe_allow_html=True)
+        _exp_colors = [CYAN, BLUE, GREEN, AMBER, RED, "#F472B6", "#A78BFA", "#FB923C", "#38BDF8", "#94A3B8"]
         fig_exp = go.Figure(go.Pie(
             labels=list(active_cats.keys()),
             values=list(active_cats.values()),
             hole=0.55,
-            marker=dict(colors=[RED, AMBER, GREEN, PURPLE, BLUE, CYAN][:len(active_cats)],
+            marker=dict(colors=_exp_colors[:len(active_cats)],
                         line=dict(color=BG, width=2)),
             textinfo="label+percent+value",
             texttemplate="<b>%{label}</b><br>£%{value:,.0f}",
             textfont=BOLD_WHITE_SM,
             hovertemplate="<b>%{label}</b><br>£%{value:,.0f}/mo<extra></extra>",
         ))
-        fig_exp.update_layout(**make_layout({"height": 320, "showlegend": False}))
+        fig_exp.update_layout(**make_layout({"height": 340, "showlegend": False}))
         fig_exp.add_annotation(text=f"<b>{gbp(sum(active_cats.values()))}</b>", x=0.5, y=0.54,
                                font=dict(size=16, color=TEXT, family="Inter"), showarrow=False)
         fig_exp.add_annotation(text="MONTHLY", x=0.5, y=0.43,
